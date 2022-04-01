@@ -7,17 +7,15 @@ import plotly as pl
 from jinja2 import PackageLoader, FileSystemLoader, Environment
 from plotly import graph_objects as go
 
-
 # margin to use in HTML charts - make charts bigger but leave space for title
 narrow_margin = {'l': 2, 'r': 2, 't': 30, 'b': 10}
 
 
-def render_html(data, template, filename, package_loader_name=None, template_globals=None):
+def render_html(data, template, package_loader_name=None, template_globals=None):
     """
-    Using a Jinja2 template, render a html file and save to disk
+    Using a Jinja2 template, render html file and return as string
     :param data: dict of jinja parameters to include in rendered html
     :param template: absolute location of template file
-    :param filename: location of where rendered html file should be output
     :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
     :return:
     """
@@ -35,9 +33,23 @@ def render_html(data, template, filename, package_loader_name=None, template_glo
         for template_global in template_globals:
             template.globals[template_global] = template_globals[template_global]
 
-    logging.info('Writing dash {} to {}'.format(data['name'], filename))
-
     output = template.render(pagetitle=data['name'], last_gen_time=datetime.now(), data=data)
+    return output
+
+
+def render_html_to_file(data, template, filename, package_loader_name=None, template_globals=None):
+    """
+        Using a Jinja2 template, render a html file and save to disk
+        :param data: dict of jinja parameters to include in rendered html
+        :param template: absolute location of template file
+        :param filename: location of where rendered html file should be output
+        :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
+        :return:
+        """
+    logging.info('Writing html {} to {}'.format(data['name'], filename))
+
+    output = render_html(data, template=template, package_loader_name=package_loader_name,
+                         template_globals=template_globals)
     with open(filename, "w", encoding='utf8') as fh:
         fh.write(output)
 

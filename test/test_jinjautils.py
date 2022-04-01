@@ -2,6 +2,7 @@ import os
 import unittest
 
 import plotly.express as px
+import plotly.graph_objects as go
 
 from commodplot import jinjautils
 
@@ -22,15 +23,22 @@ class TestCommodPlotUtil(unittest.TestCase):
         self.assertTrue(isinstance(res['ch1'], str))
         self.assertTrue(isinstance(res['innerd']['ch2'], str))
 
-    def test_render_html(self):
+    def test_render_html_to_file(self):
         dirname, filename = os.path.split(os.path.abspath(__file__))
         test_out_loc = os.path.join(dirname, 'test.html')
         if os.path.exists(test_out_loc):
             os.remove(test_out_loc)
 
-        data = {'name': 'test'}
+        fig = go.Figure(
+            data=[go.Bar(x=[1, 2, 3], y=[1, 3, 2])],
+            layout=go.Layout(
+                title=go.layout.Title(text="A Figure Specified By A Graph Object")
+            )
+        )
 
-        f = jinjautils.render_html(data, 'base.html', 'test.html', package_loader_name='commodplot')
+        data = {'name': 'test', 'fig1' : fig}
+
+        f = jinjautils.render_html_to_file(data, 'test_report.html', 'test.html', package_loader_name='commodplot')
 
         self.assertTrue(test_out_loc)
         if os.path.exists(test_out_loc):
