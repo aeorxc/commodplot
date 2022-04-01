@@ -10,6 +10,7 @@ from os import environ
 from pathlib import Path
 from smtplib import SMTP, SMTPException
 from typing import Union
+from commodplot import jinjautils
 
 logger = logging.getLogger(__name__)
 
@@ -128,3 +129,16 @@ def compose_and_send_report(subject: str, content: str, images: dict = None, sen
         contents = str(errors.getvalue())
         logging.error(contents)
         errors.close()
+
+
+def compose_and_send_jinja_report(subject: str,
+                                  data: dict,
+                                  template:str,
+                                  package_loader_name:str = None,
+                                  sender_email: str = None,
+                                  receiver_email: str = None,
+                                  ):
+    message = jinjautils.render_html(data=data, template=template, package_loader_name=package_loader_name)
+    images = {}
+    compose_and_send_report(subject=subject, content=message, images=images, sender_email=sender_email, receiver_email=receiver_email)
+
