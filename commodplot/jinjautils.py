@@ -11,7 +11,57 @@ from plotly import graph_objects as go
 narrow_margin = {'l': 2, 'r': 2, 't': 30, 'b': 10}
 
 
-def render_html(data, template, package_loader_name=None, template_globals=None):
+def convert_dict_plotly_fig_png(d):
+    """
+    Given a dict (that might be passed to jinja), convert all plotly figures png
+    """
+    for k, v in d.items():
+        if isinstance(d[k], go.Figure):
+            d[k] = plpng(d[k])
+        if isinstance(d[k], dict):
+            convert_dict_plotly_fig_png(d[k])
+
+    return d
+
+
+def plpng(fig):
+    """
+    Given a plotly figure, return it as a png
+    """
+    image = base64.b64encode(pl.io.to_image(fig)).decode("ascii")
+    res = f'<img src="data:image/png;base64,{image}">'
+    return res
+
+
+def convert_dict_plotly_fig_html_div(d):
+    """
+    Given a dict (that might be passed to jinja), convert all plotly figures of html divs
+    """
+    for k, v in d.items():
+        if isinstance(d[k], go.Figure):
+            d[k] = plhtml(d[k])
+        if isinstance(d[k], dict):
+            convert_dict_plotly_fig_html_div(d[k])
+
+    return d
+
+
+def plhtml(fig, margin=narrow_margin, **kwargs):
+    """
+    Given a plotly figure, return it as a div
+    """
+    if fig is not None:
+        fig.update_layout(margin=margin)
+
+        fig.update_xaxes(automargin=True)
+        fig.update_yaxes(automargin=True)
+        return pl.offline.plot(fig, include_plotlyjs=False, output_type='div')
+
+    return ''
+
+
+def render_html(data, template, package_loader_name=None, template_globals=None,
+                plotly_image_conv_func=convert_dict_plotly_fig_html_div):
     """
     Using a Jinja2 template, render html file and return as string
     :param data: dict of jinja parameters to include in rendered html
@@ -19,7 +69,7 @@ def render_html(data, template, package_loader_name=None, template_globals=None)
     :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
     :return:
     """
-    data = convert_dict_plotly_fig_html_div(data)
+    data = plotly_image_conv_func(data)
 
     tdirname, tfilename = os.path.split(os.path.abspath(template))
     if package_loader_name:
@@ -68,52 +118,3 @@ def jinja_finalize(value):
     if isinstance(value, go.Figure):
         return plhtml(value)
     return value
-
-
-def convert_dict_plotly_fig_png(d):
-    """
-    Given a dict (that might be passed to jinja), convert all plotly figures png
-    """
-    for k, v in d.items():
-        if isinstance(d[k], go.Figure):
-            d[k] = plpng(d[k])
-        if isinstance(d[k], dict):
-            convert_dict_plotly_fig_png(d[k])
-
-    return d
-
-
-def plpng(fig):
-    """
-    Given a plotly figure, return it as a png
-    """
-    image = base64.b64encode(pl.io.to_image(fig)).decode("ascii")
-    res = f'<img src="data:image/png;base64,{image}">'
-    return res
-
-
-def convert_dict_plotly_fig_html_div(d):
-    """
-    Given a dict (that might be passed to jinja), convert all plotly figures of html divs
-    """
-    for k, v in d.items():
-        if isinstance(d[k], go.Figure):
-            d[k] = plhtml(d[k])
-        if isinstance(d[k], dict):
-            convert_dict_plotly_fig_html_div(d[k])
-
-    return d
-
-
-def plhtml(fig, margin=narrow_margin, **kwargs):
-    """
-    Given a plotly figure, return it as a div
-    """
-    if fig is not None:
-        fig.update_layout(margin=margin)
-
-        fig.update_xaxes(automargin=True)
-        fig.update_yaxes(automargin=True)
-        return pl.offline.plot(fig, include_plotlyjs=False, output_type='div')
-
-    return ''
