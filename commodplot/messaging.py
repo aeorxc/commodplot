@@ -1,4 +1,6 @@
+import io
 import logging
+import traceback
 from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
@@ -36,7 +38,6 @@ class EmailBuilder:
 
     def set_body(self, body: str, content_type: str = "html"):
         self.message.attach(MIMEText(body, content_type))
-        self.message.set
         return self
 
     def attach_file(self, file_name: str, attachment_name: str = None, content_id: str = None):
@@ -66,40 +67,64 @@ class EmailBuilder:
         self.message.attach(part)
         return self
 
+    def attached_images(self, images: dict):
+        """Attached multiple images to message"""
+        for content_id, image in images.items():
+            part = MIMEImage(image)
+            part.add_header("Content-ID", f"<{content_id}>")
+            part.add_header("Content-Disposition", f"inline; filename={content_id}")
+            self.message.attach(part)
+        return self
+
     def build(self) -> str:
         """Complete the process and return the entire email message as a text."""
         return self.message.as_string()
 
 
-def compose_and_send_report(subject: str, content: str) -> None:
+def compose_and_send_report(subject: str, content: str, images: dict = None, sender_email: str = None,
+                            receiver_email: str = None) -> None:
     """
     Compose an e-mail message containing the report and send.
 
     Configuration:
-    * ENV: SENDER_EMAIL - email address of the sender
+    * ENV: SENDER_EMAIL - e mail address of the sender
     * ENV: RECEIVER_EMAIL - email address for the recipients
     * ENV: SMTP_HOST - hostname of the SMTP server
     * ENV: SMTP_PORT - port of the SMTP server (default: 25)
     * ENV: SMTP_TIMEOUT - timeout for SMTP operations (default: 60 seconds)
     """
-    sender_email = environ.get("SENDER_EMAIL")
-    receiver_email = environ.get("RECEIVER_EMAIL")
+
+    if not sender_email:
+        sender_email = environ.get("SENDER_EMAIL")
+    if not receiver_email:
+        receiver_email = environ.get("RECEIVER_EMAIL")
     smtp_host = environ.get("SMTP_HOST")
     smtp_port = int(environ.get("SMTP_PORT", "25"))
     smtp_timeout = int(environ.get("SMTP_TIMEOUT", "60"))
     message = (
         EmailBuilder()
-        .set_sender(sender_email)
-        .set_receiver(receiver_email)
-        .set_subject(subject)
-        .set_body(content)
-        .build()
+            .set_sender(sender_email)
+            .set_receiver(receiver_email)
+            .set_subject(subject)
+            .set_body(content)
     )
+    if images:
+        message.attached_images(images=images)
+
+    message = message.build()
     logger.info("Sending report e-mail to %s", receiver_email)
     try:
         with SMTP(smtp_host, smtp_port, timeout=smtp_timeout) as client:
+            client.set_debuglevel(1)
+            client.connect(smtp_host, smtp_port)
             client.starttls()
             client.sendmail(sender_email, receiver_email, message)
+            client.close()
         logger.info("Report sent successfully")
-    except SMTPException:
+    except SMTPException as ex:
         logger.exception("Failed to send a report")
+        errors = io.StringIO()
+        logging.error(traceback.print_exc(file=errors))
+        contents = str(errors.getvalue())
+        logging.error(contents)
+        errors.close()
