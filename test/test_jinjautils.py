@@ -38,7 +38,7 @@ class TestCommodPlotUtil(unittest.TestCase):
 
         data = {'name': 'test', 'fig1' : fig}
 
-        jinjautils.render_html_to_file(data, 'test_report.html', 'test.html', package_loader_name='commodplot')
+        jinjautils.render_html(data, template='test_report.html', filename='test.html', package_loader_name='commodplot')
 
         self.assertTrue(test_out_loc)
         if os.path.exists(test_out_loc):

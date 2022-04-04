@@ -61,7 +61,7 @@ def plhtml(fig, margin=narrow_margin, **kwargs):
 
 
 def render_html(data, template, package_loader_name=None, template_globals=None,
-                plotly_image_conv_func=convert_dict_plotly_fig_html_div):
+                plotly_image_conv_func=convert_dict_plotly_fig_html_div, filename:str=None):
     """
     Using a Jinja2 template, render html file and return as string
     :param data: dict of jinja parameters to include in rendered html
@@ -84,10 +84,14 @@ def render_html(data, template, package_loader_name=None, template_globals=None,
             template.globals[template_global] = template_globals[template_global]
 
     output = template.render(pagetitle=data['name'], last_gen_time=datetime.now(), data=data)
+
+    if filename:
+        render_html_to_file(filename, output)
+
     return output
 
 
-def render_html_to_file(data, template, filename, package_loader_name=None, template_globals=None):
+def render_html_to_file(filename:str, output:str):
     """
         Using a Jinja2 template, render a html file and save to disk
         :param data: dict of jinja parameters to include in rendered html
@@ -96,10 +100,8 @@ def render_html_to_file(data, template, filename, package_loader_name=None, temp
         :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
         :return:
         """
-    logging.info('Writing html {} to {}'.format(data['name'], filename))
+    logging.info('Writing html to {}'.format(filename))
 
-    output = render_html(data, template=template, package_loader_name=package_loader_name,
-                         template_globals=template_globals)
     with open(filename, "w", encoding='utf8') as fh:
         fh.write(output)
 
