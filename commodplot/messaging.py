@@ -138,7 +138,8 @@ def compose_and_send_jinja_report(subject: str,
                                   package_loader_name: str = None,
                                   sender_email: str = None,
                                   receiver_email: str = None,
+                                  template_globals=None,
                                   ):
     message = jinjautils.render_html(data=data, template=template, package_loader_name=package_loader_name,
-                                     plotly_image_conv_func=jinjautils.convert_dict_plotly_fig_png)
+                                     plotly_image_conv_func=jinjautils.convert_dict_plotly_fig_png, template_globals=template_globals)
     compose_and_send_report(subject=subject, content=message, sender_email=sender_email, receiver_email=receiver_email)
