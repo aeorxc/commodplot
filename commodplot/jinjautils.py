@@ -8,7 +8,7 @@ from jinja2 import PackageLoader, FileSystemLoader, Environment
 from plotly import graph_objects as go
 
 # margin to use in HTML charts - make charts bigger but leave space for title
-narrow_margin = {'l': 2, 'r': 2, 't': 30, 'b': 10}
+narrow_margin = {"l": 2, "r": 2, "t": 30, "b": 10}
 
 
 def convert_dict_plotly_fig_png(d):
@@ -55,13 +55,19 @@ def plhtml(fig, margin=narrow_margin, **kwargs):
 
         fig.update_xaxes(automargin=True)
         fig.update_yaxes(automargin=True)
-        return pl.offline.plot(fig, include_plotlyjs=False, output_type='div')
+        return pl.offline.plot(fig, include_plotlyjs=False, output_type="div")
 
-    return ''
+    return ""
 
 
-def render_html(data, template, package_loader_name=None, template_globals=None,
-                plotly_image_conv_func=convert_dict_plotly_fig_html_div, filename:str=None):
+def render_html(
+    data,
+    template,
+    package_loader_name=None,
+    template_globals=None,
+    plotly_image_conv_func=convert_dict_plotly_fig_html_div,
+    filename: str = None,
+):
     """
     Using a Jinja2 template, render html file and return as string
     :param data: dict of jinja parameters to include in rendered html
@@ -73,7 +79,7 @@ def render_html(data, template, package_loader_name=None, template_globals=None,
 
     tdirname, tfilename = os.path.split(os.path.abspath(template))
     if package_loader_name:
-        loader = PackageLoader(package_loader_name, 'templates')
+        loader = PackageLoader(package_loader_name, "templates")
     else:
         loader = FileSystemLoader(tdirname)
     env = Environment(loader=loader)
@@ -83,7 +89,9 @@ def render_html(data, template, package_loader_name=None, template_globals=None,
         for template_global in template_globals:
             template.globals[template_global] = template_globals[template_global]
 
-    output = template.render(pagetitle=data['name'], last_gen_time=datetime.now(), data=data)
+    output = template.render(
+        pagetitle=data["name"], last_gen_time=datetime.now(), data=data
+    )
 
     if filename:
         render_html_to_file(filename, output)
@@ -91,18 +99,18 @@ def render_html(data, template, package_loader_name=None, template_globals=None,
     return output
 
 
-def render_html_to_file(filename:str, output:str):
+def render_html_to_file(filename: str, output: str):
     """
-        Using a Jinja2 template, render a html file and save to disk
-        :param data: dict of jinja parameters to include in rendered html
-        :param template: absolute location of template file
-        :param filename: location of where rendered html file should be output
-        :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
-        :return:
-        """
-    logging.info('Writing html to {}'.format(filename))
+    Using a Jinja2 template, render a html file and save to disk
+    :param data: dict of jinja parameters to include in rendered html
+    :param template: absolute location of template file
+    :param filename: location of where rendered html file should be output
+    :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
+    :return:
+    """
+    logging.info("Writing html to {}".format(filename))
 
-    with open(filename, "w", encoding='utf8') as fh:
+    with open(filename, "w", encoding="utf8") as fh:
         fh.write(output)
 
     return filename
@@ -116,7 +124,7 @@ def jinja_finalize(value):
     :return:
     """
     if value is None:
-        return ''
+        return ""
     if isinstance(value, go.Figure):
         return plhtml(value)
     return value

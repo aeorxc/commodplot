@@ -2,47 +2,47 @@ import pandas as pd
 from commodutil import dates
 from commodutil import transforms
 
-default_line_col = 'khaki'
+default_line_col = "khaki"
 
 # try to put deeper colours for recent years, lighter colours for older years
 year_col_map = {
-    -10: 'wheat',
-    -9: 'burlywood',
-    -8: 'steelblue',
-    -7: 'aquamarine',
-    -6: 'orange',
-    -5: 'yellow',
-    -4: 'saddlebrown',
-    -3: 'mediumblue',
-    -2: 'darkgreen',
-    -1: 'coral',
-    0: 'black',
-    1: 'red',
-    2: 'firebrick',
-    3: 'darkred',
-    4: 'crimson',
+    -10: "wheat",
+    -9: "burlywood",
+    -8: "steelblue",
+    -7: "aquamarine",
+    -6: "orange",
+    -5: "yellow",
+    -4: "saddlebrown",
+    -3: "mediumblue",
+    -2: "darkgreen",
+    -1: "coral",
+    0: "black",
+    1: "red",
+    2: "firebrick",
+    3: "darkred",
+    4: "crimson",
 }
 
 
 def gen_title(df, **kwargs):
-    title = kwargs.get('title', '')
-    title_postfix = kwargs.get('title_postfix', '')
-    inc_change_sum = kwargs.get('inc_change_sum', True)
+    title = kwargs.get("title", "")
+    title_postfix = kwargs.get("title_postfix", "")
+    inc_change_sum = kwargs.get("inc_change_sum", True)
     if inc_change_sum:
         if title:
             if title_postfix:
-                title = '{}  {}: {}'.format(title, title_postfix, delta_summary_str(df))
+                title = "{}  {}: {}".format(title, title_postfix, delta_summary_str(df))
             else:
-                title = '{}   {}'.format(title, delta_summary_str(df))
+                title = "{}   {}".format(title, delta_summary_str(df))
         else:
             if title_postfix:
-                title = '{}   {}'.format(title_postfix, delta_summary_str(df))
+                title = "{}   {}".format(title_postfix, delta_summary_str(df))
             else:
                 title = delta_summary_str(df)
     else:
         if title:
             if title_postfix:
-                title = '{}  {}'.format(title, title_postfix)
+                title = "{}  {}".format(title, title_postfix)
             else:
                 title = title
 
@@ -50,7 +50,7 @@ def gen_title(df, **kwargs):
 
 
 def seas_table(hist, fwd=None):
-    hist = hist.resample('MS').mean()
+    hist = hist.resample("MS").mean()
 
     if fwd is not None and fwd.index[0] == hist.index[-1]:
         hist = hist[:-1]
@@ -60,20 +60,20 @@ def seas_table(hist, fwd=None):
 
     df = transforms.seasonailse(df)
 
-    summary = df.resample('Q').mean()
+    summary = df.resample("Q").mean()
     winter = summary.iloc[[0, 3], :].mean()
-    winter.name = 'Q1+Q4'
+    winter.name = "Q1+Q4"
     summer = summary.iloc[[1, 2], :].mean()
-    summer.name = 'Q2+Q3'
-    summary.index = ['Q1', 'Q2', 'Q3', 'Q4']
+    summer.name = "Q2+Q3"
+    summary.index = ["Q1", "Q2", "Q3", "Q4"]
     summary = summary.append(winter)
     summary = summary.append(summer)
-    cal = df.resample('Y').mean().iloc[0]
-    cal.name = 'Year'
+    cal = df.resample("Y").mean().iloc[0]
+    cal.name = "Year"
     summary = summary.append(cal)
     summary = summary.round(2)
 
-    df.index = df.index.strftime('%b')
+    df.index = df.index.strftime("%b")
     df = pd.concat([df, summary], sort=False).round(2)
     return df
 
@@ -90,13 +90,13 @@ def delta_summary_str(df):
     val1 = df.iloc[-1]
     val2 = df.iloc[-2]
     delta = (val1 - val2).round(2)
-    symb = '+' if delta > 0.0 else ''
+    symb = "+" if delta > 0.0 else ""
 
-    s = '{}   △: {}{}'.format(val1.round(2), symb, delta)
+    s = "{}   △: {}{}".format(val1.round(2), symb, delta)
     return s
 
 
-def format_date_col(col, date_format='%d-%b'):
+def format_date_col(col, date_format="%d-%b"):
     """
     Format a column heading as a data
     :param col:
@@ -129,7 +129,9 @@ def reindex_year_df_rel_col(df):
     colyears = [x for x in df if str(dates.curyear) in str(x)]
     if len(colyears) > 0:
         res_col = colyears[0]
-        relyear = (pd.to_datetime('{}-01-01'.format(years.get(res_col))))  # year of this column
+        relyear = pd.to_datetime(
+            "{}-01-01".format(years.get(res_col))
+        )  # year of this column
 
         dft = df[colyears].dropna()
         if len(dft) > 0:
@@ -148,7 +150,9 @@ def reindex_year_df_rel_col(df):
 
 
 def infer_freq(df):
-    histfreq = 'D'  # sometimes infer_freq returns null - assume mostly will be a daily series
+    histfreq = (
+        "D"  # sometimes infer_freq returns null - assume mostly will be a daily series
+    )
     if df is not None:
         histfreq = pd.infer_freq(df.index)
 

@@ -45,7 +45,9 @@ class EmailBuilder:
         self.message.attach(MIMEText(body, content_type))
         return self
 
-    def attach_file(self, file_name: str, attachment_name: str = None, content_id: str = None):
+    def attach_file(
+        self, file_name: str, attachment_name: str = None, content_id: str = None
+    ):
         file_path = Path(file_name)
         try:
             with file_path.open("rb") as attachment:
@@ -86,8 +88,13 @@ class EmailBuilder:
         return self.message.as_string()
 
 
-def compose_and_send_report(subject: str, content: str, images: dict = None, sender_email: str = None,
-                            receiver_email: str = None) -> None:
+def compose_and_send_report(
+    subject: str,
+    content: str,
+    images: dict = None,
+    sender_email: str = None,
+    receiver_email: str = None,
+) -> None:
     """
     Compose an e-mail message containing the report and send.
 
@@ -108,10 +115,10 @@ def compose_and_send_report(subject: str, content: str, images: dict = None, sen
     smtp_timeout = int(environ.get("SMTP_TIMEOUT", "60"))
     message = (
         EmailBuilder()
-            .set_sender(sender_email)
-            .set_receiver(receiver_email)
-            .set_subject(subject)
-            .set_body(content)
+        .set_sender(sender_email)
+        .set_receiver(receiver_email)
+        .set_subject(subject)
+        .set_body(content)
     )
     if images:
         message.attached_images(images=images)
@@ -135,14 +142,25 @@ def compose_and_send_report(subject: str, content: str, images: dict = None, sen
         errors.close()
 
 
-def compose_and_send_jinja_report(subject: str,
-                                  data: dict,
-                                  template: str,
-                                  package_loader_name: str = None,
-                                  sender_email: str = None,
-                                  receiver_email: str = None,
-                                  template_globals=None,
-                                  ):
-    message = jinjautils.render_html(data=data, template=template, package_loader_name=package_loader_name,
-                                     plotly_image_conv_func=jinjautils.convert_dict_plotly_fig_png, template_globals=template_globals)
-    compose_and_send_report(subject=subject, content=message, sender_email=sender_email, receiver_email=receiver_email)
+def compose_and_send_jinja_report(
+    subject: str,
+    data: dict,
+    template: str,
+    package_loader_name: str = None,
+    sender_email: str = None,
+    receiver_email: str = None,
+    template_globals=None,
+):
+    message = jinjautils.render_html(
+        data=data,
+        template=template,
+        package_loader_name=package_loader_name,
+        plotly_image_conv_func=jinjautils.convert_dict_plotly_fig_png,
+        template_globals=template_globals,
+    )
+    compose_and_send_report(
+        subject=subject,
+        content=message,
+        sender_email=sender_email,
+        receiver_email=receiver_email,
+    )

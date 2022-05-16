@@ -9,7 +9,6 @@ from commodplot import commodplottrace as cptr
 
 
 class TestCommodPlotTrace(unittest.TestCase):
-
     def test_min_max_range(self):
         df = cf.datagen.lines(1, 5000)
         dft = transforms.seasonailse(df)
@@ -31,9 +30,11 @@ class TestCommodPlotTrace(unittest.TestCase):
         t = cptr.timeseries_trace_by_year(df[df.columns[-1]], colyear=colyear)
         self.assertTrue(isinstance(t, go.Scatter))
         self.assertEqual(t.name, str(df.columns[-1]))
-        self.assertEqual(t.visible, cptr.line_visible(colyear))  # line visible should match results of line_visible()
+        self.assertEqual(
+            t.visible, cptr.line_visible(colyear)
+        )  # line visible should match results of line_visible()
         self.assertEqual(t.line.color, cptr.get_year_line_col(colyear))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
