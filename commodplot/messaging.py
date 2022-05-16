@@ -27,7 +27,10 @@ class EmailBuilder:
         return self
 
     def set_receiver(self, email: str):
-        self.message["To"] = email
+        if isinstance(email, list):
+            self.message["To"] = ", ".join(email)
+        else:
+            self.message["To"] = email
         return self
 
     def set_bcc(self, email: str):
