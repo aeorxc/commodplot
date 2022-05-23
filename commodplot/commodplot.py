@@ -22,7 +22,7 @@ def seas_line_plot(df, fwd=None, **kwargs):
 
     fig = go.Figure()
     traces = cptr.seas_plot_traces(df, fwd, **kwargs)
-    if "shaded_range" in traces:
+    if "shaded_range" in traces and traces["shaded_range"]:
         for trace in traces["shaded_range"]:
             fig.add_trace(trace)
 
@@ -332,7 +332,7 @@ def reindex_year_line_plot(df, **kwargs):
 
     traces = cptr.reindex_plot_traces(dft, current_select_year=colsel, **kwargs)
 
-    if "shaded_range" in traces:
+    if "shaded_range" in traces and traces["shaded_range"]:
         for trace in traces["shaded_range"]:
             fig.add_trace(trace)
 

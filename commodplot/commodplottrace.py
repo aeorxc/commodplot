@@ -160,7 +160,7 @@ def shaded_range_traces(seas, shaded_range, showlegend=True):
             legendgroup="max",
         )
         traces.append(min_trace)
-    return traces
+        return traces
 
 
 def average_line_trace(seas, average_line):
