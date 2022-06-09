@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from commodutil import dates
 from commodutil import transforms
 
@@ -92,7 +93,12 @@ def delta_summary_str(df):
     delta = (val1 - val2).round(2)
     symb = "+" if delta > 0.0 else ""
 
-    s = "{}   △: {}{}".format(val1.round(2), symb, delta)
+    if isinstance(val1, (int, np.integer)):
+        val1 = '{:,}'.format(val1)
+    else:
+        val1 = val1.round(2)
+
+    s = "{}   △: {}{}".format(val1, symb, delta)
     return s
 
 
