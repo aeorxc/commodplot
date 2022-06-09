@@ -29,17 +29,18 @@ def gen_title(df, **kwargs):
     title = kwargs.get("title", "")
     title_postfix = kwargs.get("title_postfix", "")
     inc_change_sum = kwargs.get("inc_change_sum", True)
+    precision_format = kwargs.get("precision_format", "")
     if inc_change_sum:
         if title:
             if title_postfix:
-                title = "{}  {}: {}".format(title, title_postfix, delta_summary_str(df))
+                title = "{}  {}: {}".format(title, title_postfix, delta_summary_str(df,precision_format))
             else:
-                title = "{}   {}".format(title, delta_summary_str(df))
+                title = "{}   {}".format(title, delta_summary_str(df,precision_format))
         else:
             if title_postfix:
-                title = "{}   {}".format(title_postfix, delta_summary_str(df))
+                title = "{}   {}".format(title_postfix, delta_summary_str(df,precision_format))
             else:
-                title = delta_summary_str(df)
+                title = delta_summary_str(df,precision_format)
     else:
         if title:
             if title_postfix:
@@ -79,7 +80,7 @@ def seas_table(hist, fwd=None):
     return df
 
 
-def delta_summary_str(df):
+def delta_summary_str(df, precision_format:str = None):
     """
     Given a timeseries, produce a string which shows the latest change
     For example if T-1 value is 50 and T-2 is 45, return 50.00  △: +5
@@ -93,8 +94,8 @@ def delta_summary_str(df):
     delta = (val1 - val2).round(2)
     symb = "+" if delta > 0.0 else ""
 
-    if isinstance(val1, (int, np.integer)):
-        val1 = '{:,}'.format(val1)
+    if precision_format:
+        val1, delta = precision_format.format(val1), precision_format.format(delta)
     else:
         val1 = val1.round(2)
 
