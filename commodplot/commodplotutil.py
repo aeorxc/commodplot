@@ -54,9 +54,12 @@ def gen_title(df, **kwargs):
 def seas_table(hist, fwd=None):
     hist = hist.resample("MS").mean()
 
-    if fwd is not None and fwd.index[0] == hist.index[-1]:
-        hist = hist[:-1]
-        df = pd.concat([hist, fwd], sort=False)
+    if fwd is not None:
+        if fwd.index[0] == hist.index[-1]:
+            hist = hist[:-1]
+            df = pd.concat([hist, fwd], sort=False)
+        elif (fwd.index[0].year - hist.index[-1].year) + (fwd.index[0].month - hist.index[-1].month) == 1:
+            df = pd.concat([hist, fwd], sort=False)
     else:
         df = hist
 
