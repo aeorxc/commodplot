@@ -33,14 +33,18 @@ def gen_title(df, **kwargs):
     if inc_change_sum:
         if title:
             if title_postfix:
-                title = "{}  {}: {}".format(title, title_postfix, delta_summary_str(df,precision_format))
+                title = "{}  {}: {}".format(
+                    title, title_postfix, delta_summary_str(df, precision_format)
+                )
             else:
-                title = "{}   {}".format(title, delta_summary_str(df,precision_format))
+                title = "{}   {}".format(title, delta_summary_str(df, precision_format))
         else:
             if title_postfix:
-                title = "{}   {}".format(title_postfix, delta_summary_str(df,precision_format))
+                title = "{}   {}".format(
+                    title_postfix, delta_summary_str(df, precision_format)
+                )
             else:
-                title = delta_summary_str(df,precision_format)
+                title = delta_summary_str(df, precision_format)
     else:
         if title:
             if title_postfix:
@@ -54,14 +58,16 @@ def gen_title(df, **kwargs):
 def seas_table(hist, fwd=None):
     hist = hist.resample("MS").mean()
 
+    df = hist
+
     if fwd is not None:
         if fwd.index[0] == hist.index[-1]:
             hist = hist[:-1]
             df = pd.concat([hist, fwd], sort=False)
-        elif (fwd.index[0].year - hist.index[-1].year) + (fwd.index[0].month - hist.index[-1].month) == 1:
+        elif (fwd.index[0].year - hist.index[-1].year) + (
+            fwd.index[0].month - hist.index[-1].month
+        ) == 1:
             df = pd.concat([hist, fwd], sort=False)
-    else:
-        df = hist
 
     df = transforms.seasonailse(df)
 
@@ -83,7 +89,7 @@ def seas_table(hist, fwd=None):
     return df
 
 
-def delta_summary_str(df, precision_format:str = None):
+def delta_summary_str(df, precision_format: str = None):
     """
     Given a timeseries, produce a string which shows the latest change
     For example if T-1 value is 50 and T-2 is 45, return 50.00  △: +5

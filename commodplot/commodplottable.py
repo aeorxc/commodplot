@@ -57,7 +57,9 @@ def color_accounting(val):
 
 
 def generate_table(
-    df: pd.DataFrame, precision: t.Tuple[int, dict] = None, accounting_col_columns: list = None
+    df: pd.DataFrame,
+    precision: t.Tuple[int, dict] = None,
+    accounting_col_columns: list = None,
 ):
 
     if precision:
