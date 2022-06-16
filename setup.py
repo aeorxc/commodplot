@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="commodplot",
-    version="1.4.5",
+    version="1.4.6",
     author="aeorxc",
     author_email="author@example.com",
     description="common commodity plotting including seasonal charts using plotly",
@@ -16,7 +16,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["pandas", "plotly", "commodutil", "cufflinks"],
+    install_requires=["pandas", "plotly", "commodutil", "cufflinks", "kaleido"],
     python_requires=">=3.6",
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
