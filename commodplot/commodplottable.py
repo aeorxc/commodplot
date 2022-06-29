@@ -4,7 +4,7 @@ import typing as t
 table_style = [
     dict(selector="tr:hover", props=[("background", "#D6EEEE")]),
     dict(
-        selector="th",
+        selector="th.col_heading",
         props=[
             ("color", "#fff"),
             ("border", "1px solid #eee"),
@@ -14,6 +14,13 @@ table_style = [
             ("font-size", "18px"),
         ],
     ),
+    dict(selector="th.row_heading", props=[
+                                           ("border", "1px solid #eee"),
+                                           ("padding", "12px 35px"),
+                                           ("border-collapse", "collapse"),
+                                           ("font-size", "12px"),
+                                           ("text-align", "left")
+                                           ]),
     dict(
         selector="td",
         props=[
