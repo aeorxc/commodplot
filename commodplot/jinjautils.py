@@ -20,6 +20,10 @@ def convert_dict_plotly_fig_png(d):
             d[k] = plpng(d[k])
         if isinstance(d[k], dict):
             convert_dict_plotly_fig_png(d[k])
+        if isinstance(d[k], list):
+            for count, item in enumerate(d[k]):
+                if isinstance(item, go.Figure):
+                    d[k][count] = plpng(item)
 
     return d
 
