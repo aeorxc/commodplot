@@ -14,13 +14,16 @@ table_style = [
             ("font-size", "18px"),
         ],
     ),
-    dict(selector="th.row_heading", props=[
-                                           ("border", "1px solid #eee"),
-                                           ("padding", "12px 35px"),
-                                           ("border-collapse", "collapse"),
-                                           ("font-size", "12px"),
-                                           ("text-align", "left")
-                                           ]),
+    dict(
+        selector="th.row_heading",
+        props=[
+            ("border", "1px solid #eee"),
+            ("padding", "12px 35px"),
+            ("border-collapse", "collapse"),
+            ("font-size", "12px"),
+            ("text-align", "left"),
+        ],
+    ),
     dict(
         selector="td",
         props=[

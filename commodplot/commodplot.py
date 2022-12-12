@@ -3,6 +3,7 @@ import itertools
 import cufflinks as cf
 import pandas as pd
 import plotly as py
+import plotly.express as px
 import plotly.graph_objects as go
 from commodutil import dates
 from commodutil import transforms
@@ -405,6 +406,60 @@ def bar_chart(df, **kwargs):
     barmode = kwargs.get("barmode", None)
     if barmode:
         fig.update_layout(barmode=barmode)
+
+    return fig
+
+
+def stacked_grouped_bar_chart(df, **kwargs):
+    """Given a dataframe with multi-indexed columns, generate a stacked group barchart.
+    Column level 0 will be used for grouping of the bars.
+    Column level 1 will be used for the stacked bars.
+    based on : https://stackoverflow.com/questions/65289591/python-plotly-stacked-grouped-bar-chart
+    """
+
+    fig = go.Figure()
+
+    color = dict(
+        zip(
+            df.columns.levels[1],
+            px.colors.qualitative.Plotly[: len(df.columns.levels[1])],
+        )
+    )
+    showlegend = [i % len(df.columns.levels[0]) == 0 for i in range(len(df.columns))]
+
+    # xaxis_tickformat doesn't appear to work so have to format the dataframe index
+    if isinstance(df.index, pd.DatetimeIndex):
+        df = df.copy()
+        freq = pd.infer_freq(df.index)
+        if freq is not None:
+            if freq in ("M", "MS", "ME"):
+                df.index = df.index.map(lambda x: x.strftime("%m-%Y"), 1)
+            if freq in ("Y", "YS", "YE"):
+                df.index = df.index.map(lambda x: x.year, 1)
+            if freq in ("D", "B"):
+                df.index = df.index.map(lambda x: x.date(), 1)
+
+    i = 0
+    for col in df.columns:
+        f = df[col[0]][col[1]]
+        fig.add_trace(
+            go.Bar(
+                x=[f.index, [col[0]] * len(f.index)],
+                y=f,
+                name=col[1],
+                marker_color=color[col[1]],
+                legendgroup=col[1],
+                showlegend=showlegend[i],
+            )
+        )
+        i += 1
+    fig.update_layout(
+        title=kwargs.get("title", ""),
+        xaxis=dict(title_text=kwargs.get("xaxis_title", None)),
+        yaxis=dict(title_text=kwargs.get("yaxis_title", None)),
+        barmode="relative",
+        margin=preset_margins,
+    )
 
     return fig
 

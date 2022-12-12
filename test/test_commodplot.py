@@ -242,6 +242,22 @@ class TestCommodplot(unittest.TestCase):
         res = commodplot.line_plot(cl, fwd=fwd, title="Test")
         self.assertTrue(isinstance(res, go.Figure))
 
+    def test_stacked_grouped_bar_chart(self):
+        # create arrays for the first and second levels of the MultiIndex
+        level1 = ["A", "A", "B", "B"]
+        level2 = ["X", "Y", "X", "Y"]
+
+        # create a MultiIndex from the arrays
+        multi_index = pd.MultiIndex.from_arrays([level1, level2])
+
+        # create a DataFrame with the MultiIndex
+        df = pd.DataFrame(
+            data={"col1": [1, 2, 3, 4], "col2": [5, 6, 7, 8]}, index=multi_index
+        ).T
+
+        res = commodplot.stacked_grouped_bar_chart(df)
+        self.assertTrue(isinstance(res, go.Figure))
+
 
 if __name__ == "__main__":
     unittest.main()
