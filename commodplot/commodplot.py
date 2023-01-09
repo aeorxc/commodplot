@@ -329,6 +329,9 @@ def reindex_year_line_plot(df, **kwargs):
     """
     fig = go.Figure()
     dft = transforms.reindex_year(df)
+    max_results = kwargs.get("max_results", None)
+    if max_results:
+        dft = dft.tail(max_results)
     colsel = cpu.reindex_year_df_rel_col(dft)
 
     traces = cptr.reindex_plot_traces(dft, current_select_year=colsel, **kwargs)
