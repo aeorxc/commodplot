@@ -85,7 +85,7 @@ class TestCommodplot(unittest.TestCase):
 
         sp = forwards.time_spreads(cl, 12, 12)
 
-        res = commodplot.reindex_year_line_plot(sp, max_results=360)
+        res = commodplot.reindex_year_line_plot(sp, max_results=360, visible_line_years=7)
         self.assertTrue(isinstance(res, go.Figure))
 
     def test_fwd_hist_plot(self):

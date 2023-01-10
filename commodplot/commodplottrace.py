@@ -220,7 +220,7 @@ def timeseries_to_seas_trace(
 
 
 def timeseries_to_reindex_year_trace(
-    dft, text, dash=None, current_select_year=None, showlegend=True
+    dft, text, dash=None, current_select_year=None, showlegend=True, visible_line_years=None
 ):
     traces = []
     colyearmap = cpu.dates.find_year(dft)
@@ -240,7 +240,7 @@ def timeseries_to_reindex_year_trace(
             name=str(col),
             hovertemplate=hovertemplate_default,
             text=text,
-            visible=line_visible(colyear),
+            visible=line_visible(colyear, visible_line_years=visible_line_years),
             line=dict(color=get_year_line_col(colyear), dash=dash, width=width),
             showlegend=showlegend,
             legendgroup=str(col),
@@ -316,6 +316,7 @@ def reindex_plot_traces(df, **kwargs):
     """
     res = {}
     showlegend = kwargs.get("showlegend", None)
+    visible_line_years = kwargs.get("visible_line_years", None)
     current_select_year = kwargs.get("current_select_year", None)
 
     text = df.index.strftime("%d-%b")
@@ -328,7 +329,7 @@ def reindex_plot_traces(df, **kwargs):
 
     # historical / solid lines
     res["hist"] = timeseries_to_reindex_year_trace(
-        df, text, current_select_year=current_select_year, showlegend=showlegend
+        df, text, current_select_year=current_select_year, showlegend=showlegend, visible_line_years=visible_line_years
     )
 
     return res
