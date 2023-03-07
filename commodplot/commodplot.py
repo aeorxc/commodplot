@@ -316,6 +316,21 @@ def diff_plot(df, **kwargs):
     for col in barcols:
         fig.add_trace(go.Bar(x=df.index, y=df[col], name=col), row=2, col=1)
 
+    today = pd.Timestamp.today()
+    vline = go.layout.Shape(
+        type='line',
+        x0=today,
+        x1=today,
+        y0=df.min().min(),  # Set y0 to the minimum value of y_data
+        y1=df.max().max(),  # Set y1 to the maximum value of y_data
+        line=dict(
+            color='grey',
+            width=1,
+            dash='dash'
+        )
+    )
+    fig.update_layout(shapes=[vline])
+
     title = kwargs.get("title", "")
     fig.update_layout(title_text=title, title_x=0.01, margin=preset_margins)
     return fig
@@ -456,6 +471,7 @@ def stacked_grouped_bar_chart(df, **kwargs):
             )
         )
         i += 1
+
     fig.update_layout(
         title=kwargs.get("title", ""),
         xaxis=dict(title_text=kwargs.get("xaxis_title", None)),
