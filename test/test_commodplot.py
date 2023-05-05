@@ -85,7 +85,9 @@ class TestCommodplot(unittest.TestCase):
 
         sp = forwards.time_spreads(cl, 12, 12)
 
-        res = commodplot.reindex_year_line_plot(sp, max_results=360, visible_line_years=7)
+        res = commodplot.reindex_year_line_plot(
+            sp, max_results=360, visible_line_years=7
+        )
         self.assertTrue(isinstance(res, go.Figure))
 
     def test_fwd_hist_plot(self):
@@ -256,6 +258,19 @@ class TestCommodplot(unittest.TestCase):
         ).T
 
         res = commodplot.stacked_grouped_bar_chart(df)
+        self.assertTrue(isinstance(res, go.Figure))
+
+    def test_bar_line_plot(self):
+        dirname, filename = os.path.split(os.path.abspath(__file__))
+        cl = pd.read_csv(
+            os.path.join(dirname, "test_cl.csv"),
+            index_col=0,
+            parse_dates=True,
+            dayfirst=True,
+        )
+        cl = cl.dropna(how="all", axis=1)[["CL_2020F", "CL_2020G"]]
+        cl = cl.rename(columns={"CL_2020F": "A", "CL_2020G": "B"})
+        res = commodplot.bar_line_plot(cl, title="Test")
         self.assertTrue(isinstance(res, go.Figure))
 
 

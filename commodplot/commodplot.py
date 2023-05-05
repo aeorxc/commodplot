@@ -1,6 +1,5 @@
 import itertools
 
-import cufflinks as cf
 import pandas as pd
 import plotly as py
 import plotly.express as px
@@ -271,12 +270,29 @@ def bar_line_plot(df, linecol="Total", **kwargs):
     if linecol not in df:
         df[linecol] = df.sum(1, skipna=False)
 
-    barcols = [x for x in df.columns if linecol not in x]
-    barspecs = {"kind": "bar", "barmode": "relative", "title": "d", "columns": barcols}
-    linespecs = {"kind": "scatter", "columns": linecol, "color": "black"}
+    fig = go.Figure()
+    # create the bar trace
+    for col in df.columns:
+        if col != linecol:
+            bar_trace = go.Bar(
+                x=df.index,
+                y=df[col],
+                name=col,
+            )
+            fig.add_trace(bar_trace)
 
-    fig = cf.tools.figures(df, [barspecs, linespecs])  # returns dict
-    fig = go.Figure(fig)
+    # create the line trace
+    line_trace = go.Scatter(
+        x=df.index,
+        y=df[linecol],
+        name=linecol,
+        mode="lines",
+        line=dict(color="black"),
+    )
+
+    fig.add_trace(line_trace)
+
+    # update the figure layout if needed
     yaxis_title = kwargs.get("yaxis_title", None)
     yaxis_range = kwargs.get("yaxis_range", None)
     title = kwargs.get("title", None)
@@ -285,10 +301,12 @@ def bar_line_plot(df, linecol="Total", **kwargs):
         title_x=0.01,
         xaxis_title="Date",
         yaxis_title=yaxis_title,
-        margin=preset_margins,
+        barmode="relative",
+        margin=dict(l=40, r=20, t=40, b=20),
     )
     if yaxis_range is not None:
         fig.update_layout(yaxis=dict(range=yaxis_range))
+
     return fig
 
 
@@ -318,16 +336,12 @@ def diff_plot(df, **kwargs):
 
     today = pd.Timestamp.today()
     vline = go.layout.Shape(
-        type='line',
+        type="line",
         x0=today,
         x1=today,
         y0=df.min().min(),  # Set y0 to the minimum value of y_data
         y1=df.max().max(),  # Set y1 to the maximum value of y_data
-        line=dict(
-            color='grey',
-            width=1,
-            dash='dash'
-        )
+        line=dict(color="grey", width=1, dash="dash"),
     )
     fig.update_layout(shapes=[vline])
 

@@ -71,7 +71,6 @@ def generate_table(
     precision: t.Tuple[int, dict] = None,
     accounting_col_columns: list = None,
 ):
-
     if precision:
         if isinstance(precision, int):
             format_var = "{:.%sf}" % precision

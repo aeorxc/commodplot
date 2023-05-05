@@ -1,6 +1,5 @@
 pandas
 plotly
 commodutil
-cufflinks
 jinja2
 kaleido
