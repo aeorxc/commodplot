@@ -62,7 +62,7 @@ def color_accounting(val):
     if isinstance(val, (float, int)):
         color = "red" if val < 0 else "green"
     else:
-        color = "red" if float(val.replace(",", "")) < 0 else "green"
+        color = "red" if float(val.replace(",", "").replace('%', '')) < 0 else "green"
     return "color: %s" % color
 
 
@@ -77,8 +77,12 @@ def generate_table(
             df = df.applymap(lambda x: format_var.format(x))
         elif isinstance(precision, dict):
             for col, col_precision in precision.items():
-                format_var = "{:,.%sf}" % col_precision
-                df[col] = df[col].map(format_var.format)
+                if col in df.columns:
+                    if isinstance(col_precision, int):
+                        format_var = "{:,.%sf}" % col_precision
+                    else:
+                        format_var = col_precision
+                    df[col] = df[col].map(format_var.format)
 
     if accounting_col_columns:
         res = df.style.applymap(
