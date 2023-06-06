@@ -108,7 +108,7 @@ def delta_summary_str(df, precision_format: str = None):
     else:
         val1 = val1.round(2)
 
-    s = "{}   △: {}{}".format(val1, symb, delta)
+    s = "{}   \u0394: {}{}".format(val1, symb, delta)
     return s
 
 
