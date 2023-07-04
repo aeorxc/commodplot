@@ -419,9 +419,10 @@ def candle_chart(df, **kwargs):
 def stacked_area_chart(df, **kwargs):
     fig = go.Figure()
     group = kwargs.get("stackgroup", "stackgroup")
+    showlegend = kwargs.get("showlegend", None)
 
     for col in df.columns:
-        fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup=group))
+        fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup=group, showlegend=showlegend))
 
     fig.update_layout(title=kwargs.get("title", ""))
     return fig
