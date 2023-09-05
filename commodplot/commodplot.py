@@ -424,7 +424,7 @@ def stacked_area_chart(df, **kwargs):
     for col in df.columns:
         fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup=group, showlegend=showlegend))
 
-    fig.update_layout(title=kwargs.get("title", ""))
+    fig.update_layout(title=kwargs.get("title", ""), showlegend=showlegend)
     return fig
 
 
