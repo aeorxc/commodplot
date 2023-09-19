@@ -428,6 +428,23 @@ def stacked_area_chart(df, **kwargs):
     return fig
 
 
+def stacked_area_chart_negative_cols(df, **kwargs):
+    """
+    Similar to stacked_area_chart except showing negative columns as a separate stackgroup
+    below the 0 line
+    """
+    fig = go.Figure()
+    showlegend = kwargs.get("showlegend", None)
+
+    for col in df.columns:
+        if df[col].sum() < 0:
+            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup="neg", showlegend=showlegend))
+        else:
+            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup="pos", showlegend=showlegend))
+    fig.update_layout(title=kwargs.get("title", ""), showlegend=showlegend)
+    return fig
+
+
 def bar_chart(df, **kwargs):
     fig = go.Figure()
 

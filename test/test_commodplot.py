@@ -125,6 +125,18 @@ class TestCommodplot(unittest.TestCase):
         res = commodplot.stacked_area_chart(cl)
         self.assertTrue(isinstance(res, go.Figure))
 
+    def test_stack_area_chart_negative_cols(self):
+        dirname, filename = os.path.split(os.path.abspath(__file__))
+        cl = pd.read_csv(
+            os.path.join(dirname, "test_cl_chlo.csv"),
+            index_col=0,
+            parse_dates=True,
+            dayfirst=True,
+        )
+
+        res = commodplot.stacked_area_chart_negative_cols(cl)
+        self.assertTrue(isinstance(res, go.Figure))
+
     def test_stack_bar_chart(self):
         dirname, filename = os.path.split(os.path.abspath(__file__))
         cl = pd.read_csv(
