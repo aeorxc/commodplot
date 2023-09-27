@@ -412,7 +412,10 @@ def candle_chart(df, **kwargs):
     )
 
     title = cpu.gen_title(df["Close"], **kwargs)
-    fig.update_layout(title=title)
+    fig.update_layout(
+        title=title,
+        margin=preset_margins,
+    )
     return fig
 
 
@@ -422,9 +425,15 @@ def stacked_area_chart(df, **kwargs):
     showlegend = kwargs.get("showlegend", None)
 
     for col in df.columns:
-        fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup=group, showlegend=showlegend))
+        fig.add_trace(
+            go.Scatter(
+                x=df.index, y=df[col], name=col, stackgroup=group, showlegend=showlegend
+            )
+        )
 
-    fig.update_layout(title=kwargs.get("title", ""), showlegend=showlegend)
+    fig.update_layout(
+        title=kwargs.get("title", ""), showlegend=showlegend, margin=preset_margins
+    )
     return fig
 
 
@@ -438,10 +447,30 @@ def stacked_area_chart_negative_cols(df, **kwargs):
 
     for col in df.columns:
         if df[col].sum() < 0:
-            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup="neg", showlegend=showlegend))
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=df[col],
+                    name=col,
+                    stackgroup="neg",
+                    showlegend=showlegend,
+                )
+            )
         else:
-            fig.add_trace(go.Scatter(x=df.index, y=df[col], name=col, stackgroup="pos", showlegend=showlegend))
-    fig.update_layout(title=kwargs.get("title", ""), showlegend=showlegend)
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=df[col],
+                    name=col,
+                    stackgroup="pos",
+                    showlegend=showlegend,
+                )
+            )
+    fig.update_layout(
+        title=kwargs.get("title", ""),
+        showlegend=showlegend,
+        margin=preset_margins,
+    )
     return fig
 
 
@@ -452,7 +481,11 @@ def bar_chart(df, **kwargs):
         fig.add_trace(go.Bar(x=df.index, y=df[col], name=col))
 
     hovermode = kwargs.get("hovermode", "x")
-    fig.update_layout(title=kwargs.get("title", ""), hovermode=hovermode)
+    fig.update_layout(
+        title=kwargs.get("title", ""),
+        hovermode=hovermode,
+        margin=preset_margins,
+    )
     barmode = kwargs.get("barmode", None)
     if barmode:
         fig.update_layout(barmode=barmode)
@@ -583,5 +616,6 @@ def line_plot(df, fwd=None, **kwargs):
         legend=legend,
         showlegend=showlegend,
         hovermode=hovermode,
+        margin=preset_margins,
     )
     return fig

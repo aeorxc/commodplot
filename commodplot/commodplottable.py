@@ -62,7 +62,7 @@ def color_accounting(val):
     if isinstance(val, (float, int)):
         color = "red" if val < 0 else "green"
     else:
-        color = "red" if float(val.replace(",", "").replace('%', '')) < 0 else "green"
+        color = "red" if float(val.replace(",", "").replace("%", "")) < 0 else "green"
     return "color: %s" % color
 
 
