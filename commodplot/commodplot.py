@@ -573,6 +573,7 @@ def line_plot(df, fwd=None, **kwargs):
 
     title = cpu.gen_title(df, inc_change_sum=False, **kwargs)
     legend = go.layout.Legend(font=dict(size=10))
+    showlegend = kwargs.get("showlegend", True)
     yaxis_title = kwargs.get("yaxis_title", None)
     hovermode = kwargs.get("hovermode", "closest")
     fig.update_layout(
@@ -580,6 +581,7 @@ def line_plot(df, fwd=None, **kwargs):
         title_x=0.01,
         yaxis_title=yaxis_title,
         legend=legend,
+        showlegend=showlegend,
         hovermode=hovermode,
     )
     return fig
