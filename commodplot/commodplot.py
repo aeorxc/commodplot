@@ -537,6 +537,26 @@ def stacked_grouped_bar_chart(df, **kwargs):
         )
         i += 1
 
+
+    # Adding dots for the sum of each level 1 within each level 0 category
+    for level0 in df.columns.levels[0]:
+        group_sum = df[level0].sum(axis=1)
+        x_coords = [df.index, [level0] * len(df.index)]
+        fig.add_trace(
+            go.Scatter(
+                x=x_coords,
+                y=group_sum,
+                mode='markers',
+                marker=dict(
+                    size=10,
+                    color='black',  # set color equal to a variable
+                ),
+                name=f'Sum of {level0}',
+                legendgroup=level0,
+                showlegend=False,
+            )
+        )
+
     fig.update_layout(
         title=kwargs.get("title", ""),
         xaxis=dict(title_text=kwargs.get("xaxis_title", None)),
