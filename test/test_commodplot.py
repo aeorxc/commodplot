@@ -285,6 +285,17 @@ class TestCommodplot(unittest.TestCase):
         res = commodplot.bar_line_plot(cl, title="Test")
         self.assertTrue(isinstance(res, go.Figure))
 
+    def test_horizontal_bar_plot(self):
+        dirname, filename = os.path.split(os.path.abspath(__file__))
+        cl = pd.read_csv(
+            os.path.join(dirname, "test_cl.csv"),
+            index_col=0,
+            parse_dates=True,
+            dayfirst=True,
+        )
+        res = commodplot.horizontal_bar_plot(cl, title="Test")
+        self.assertTrue(isinstance(res, go.Figure))
+
     def test_timeseries_scatter_plot(self):
         dirname, filename = os.path.split(os.path.abspath(__file__))
         cl = pd.read_csv(
@@ -298,10 +309,6 @@ class TestCommodplot(unittest.TestCase):
 
         # Assuming the function takes a DataFrame and returns a plotly Figure object
         res = commodplot.timeseries_scatter_plot(cl, line_last_n=12, fit_line=True)
-
-        import plotly.offline as py_offline
-
-        py_offline.plot(res, filename="chart.html")
 
         # Now we assert that the result is an instance of a plotly Figure
         self.assertTrue(isinstance(res, go.Figure))

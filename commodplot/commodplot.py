@@ -313,6 +313,23 @@ def bar_line_plot(df, linecol="Total", **kwargs):
     return fig
 
 
+def horizontal_bar_plot(df, **kwargs):
+    bar = go.Bar(x=df.iloc[:, 0], y=df.index, orientation="h")  # horizontal bars
+
+    fig = go.Figure(data=[bar])
+
+    fig.update_layout(
+        title=kwargs.get("title", None),
+        xaxis_title=df.columns[0],
+        yaxis_title=df.index.name,
+        bargap=kwargs.get("bargap", 0.25),  # space between bars
+        width=kwargs.get("width", None),
+        height=kwargs.get("height", None),
+    )
+
+    return fig
+
+
 def diff_plot(df, **kwargs):
     """
     Given a dataframe, plot each column as line plot with a subplot below
