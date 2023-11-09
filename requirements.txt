@@ -2,4 +2,4 @@ pandas
 plotly
 commodutil
 jinja2
-kaleido
+scipy

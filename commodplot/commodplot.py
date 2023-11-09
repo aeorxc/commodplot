@@ -7,6 +7,9 @@ import plotly.graph_objects as go
 from commodutil import dates
 from commodutil import transforms
 from plotly.subplots import make_subplots
+import numpy as np
+
+from scipy.stats import zscore
 
 from commodplot import commodplottrace as cptr
 from commodplot import commodplotutil as cpu
@@ -537,7 +540,6 @@ def stacked_grouped_bar_chart(df, **kwargs):
         )
         i += 1
 
-
     # Adding dots for the sum of each level 1 within each level 0 category
     for level0 in df.columns.levels[0]:
         group_sum = df[level0].sum(axis=1)
@@ -546,12 +548,12 @@ def stacked_grouped_bar_chart(df, **kwargs):
             go.Scatter(
                 x=x_coords,
                 y=group_sum,
-                mode='markers',
+                mode="markers",
                 marker=dict(
                     size=10,
-                    color='black',  # set color equal to a variable
+                    color="black",  # set color equal to a variable
                 ),
-                name=f'Sum of {level0}',
+                name=f"Sum of {level0}",
                 legendgroup=level0,
                 showlegend=False,
             )
@@ -638,4 +640,163 @@ def line_plot(df, fwd=None, **kwargs):
         hovermode=hovermode,
         margin=preset_margins,
     )
+    return fig
+
+
+def timeseries_scatter_plot(df, **kwargs):
+    """
+    Generate a scatter plot for a time series dataframe.
+
+    Parameters:
+    - df: A dataframe with a DateTimeIndex and at least two columns.
+          The x-axis will be based on df.iloc[:, 0] and the y-axis on df.iloc[:, 1].
+    """
+
+    # Convert the date index to numbers for color gradient
+    color_values = df.index.astype(int)
+
+    # Create scatter plot using Plotly
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=df.iloc[:, 0],
+            y=df.iloc[:, 1],
+            mode="markers",
+            marker=dict(
+                color=color_values,
+                colorscale="Plasma",
+                colorbar=dict(title="Date"),
+                showscale=True,
+            ),
+            text=df.index.strftime("%Y-%m-%d"),
+            hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
+        )
+    )
+
+    title = kwargs.get("title", f"{df.columns[0]} vs {df.columns[1]}")
+
+    fig.update_layout(
+        title=title,
+        xaxis_title=df.columns[0],
+        yaxis_title=df.columns[1],
+        hovermode="closest",
+    )
+
+    # Adjust the colorbar to display actual dates
+    colorbar_tickvals = color_values[
+        [0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]
+    ]
+    colorbar_ticktext = (
+        df.index[[0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]]
+        .strftime("%Y-%m-%d")
+        .to_list()
+    )
+    fig.update_traces(
+        marker_colorbar_tickvals=colorbar_tickvals,
+        marker_colorbar_ticktext=colorbar_ticktext,
+    )
+
+    return fig
+
+
+def timeseries_scatter_plot(df, line_last_n=None, fit_line=False, **kwargs):
+    """
+    Generate a scatter plot for a time series dataframe.
+
+    Parameters:
+    - df: A dataframe with a DateTimeIndex and at least two columns.
+          The x-axis will be based on df.iloc[:, 0] and the y-axis on df.iloc[:, 1].
+    - line_last_n: Optional, an integer to indicate how many of the last points to connect with a line.
+    - fit_line: Optional, boolean to add a line of best fit excluding outliers.
+    """
+
+    # Convert the date index to numbers for color gradient
+    color_values = df.index.astype(int)
+
+    # Create scatter plot using Plotly
+    fig = go.Figure()
+
+    # If fit_line is True, calculate the line of best fit
+    if fit_line:
+        # Using z-score to identify and exclude outliers
+        z_scores = zscore(df.iloc[:, 1])
+        abs_z_scores = np.abs(z_scores)
+        filtered_entries = abs_z_scores < 2  # Adjust the z-score threshold as needed
+        new_df = df[filtered_entries]
+
+        # Perform linear regression on the data without outliers
+        m, b = np.polyfit(new_df.iloc[:, 0], new_df.iloc[:, 1], 1)
+        # Add the line of best fit to the plot
+        fig.add_trace(
+            go.Scatter(
+                x=new_df.iloc[:, 0],
+                y=m * new_df.iloc[:, 0] + b,
+                mode="lines",
+                line=dict(color="grey", dash="dash"),
+                name="Line of Best Fit",
+                showlegend=False,
+            )
+        )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df.iloc[:, 0],
+            y=df.iloc[:, 1],
+            mode="markers",
+            marker=dict(
+                color=color_values,
+                colorscale="Viridis",
+                colorbar=dict(title="Date"),
+                showscale=True,
+            ),
+            text=df.index.strftime("%Y-%m-%d"),
+            hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
+        )
+    )
+
+    # Add a line connecting the last N data points if specified
+    if line_last_n is not None and line_last_n > 0:
+        # Ensuring the number of points does not exceed the dataframe's length
+        line_last_n = min(len(df), line_last_n)
+        last_points = df.iloc[-line_last_n:, :]
+        last_color_values = last_points.index.astype(int)
+        fig.add_trace(
+            go.Scatter(
+                x=last_points.iloc[:, 0],
+                y=last_points.iloc[:, 1],
+                mode="lines+markers",
+                line=dict(color="rgba(0,0,0,0.5)", width=1),
+                marker=dict(color=last_color_values, colorscale="Viridis", size=8),
+                showlegend=False,
+                hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
+                text=last_points.index.strftime("%Y-%m-%d"),
+            )
+        )
+
+    title = kwargs.get("title", f"Scatter plot of {df.columns[0]} vs {df.columns[1]}")
+    xaxis_title = kwargs.get("xaxis_title", df.columns[0])
+    yaxis_title = kwargs.get("yaxis_title", df.columns[1])
+
+    fig.update_layout(
+        title=title,
+        xaxis_title=xaxis_title,
+        yaxis_title=yaxis_title,
+        hovermode="closest",
+    )
+
+    # Adjust the colorbar to display actual dates
+    colorbar_tickvals = color_values[
+        [0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]
+    ]
+    colorbar_ticktext = (
+        df.index[[0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]]
+        .strftime("%Y-%m-%d")
+        .to_list()
+    )
+    fig.update_traces(
+        marker_colorbar_tickvals=colorbar_tickvals,
+        marker_colorbar_ticktext=colorbar_ticktext,
+    )
+
     return fig

@@ -20,7 +20,7 @@ setuptools.setup(
         "pandas",
         "plotly",
         "commodutil",
-        "kaleido",
+        "scipy",
         "jinja2",
     ],
     python_requires=">=3.6",

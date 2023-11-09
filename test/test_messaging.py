@@ -4,7 +4,7 @@ import pytest
 from commodplot import messaging
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_compose_and_send_report():
     fig = go.Figure(
         data=[go.Bar(x=[1, 2, 3], y=[1, 3, 2])],
@@ -24,7 +24,7 @@ def test_compose_and_send_report():
         </html>'
         """
 
-    img = fig.to_image(width=1200, height=350, engine="kaleido")
+    img = fig.to_image(width=1200, height=350)
     images = {"0": img}
     sender = "testcommodplot@mailinator.com"
     messaging.compose_and_send_report(
