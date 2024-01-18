@@ -22,6 +22,7 @@ def seas_line_plot(df, fwd=None, **kwargs):
     Given a DataFrame produce a seasonal line plot (x-axis - Jan-Dec, y-axis Yearly lines)
     Can overlay a forward curve on top of this
     """
+    df = df.sort_index()
 
     fig = go.Figure()
     traces = cptr.seas_plot_traces(df, fwd, **kwargs)
@@ -153,6 +154,7 @@ def seas_box_plot(hist, fwd=None, **kwargs):
 
 
 def seas_table_plot(hist, fwd=None):
+    hist = hist.sort_index()
     df = cpu.seas_table(hist, fwd)
 
     colsh = list(df.columns)

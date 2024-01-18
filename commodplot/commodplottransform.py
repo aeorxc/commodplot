@@ -17,7 +17,7 @@ def seasonalise(df, histfreq):
             histfreq = "D"  # sometimes infer_freq returns null - assume mostly will be a daily series
 
     if histfreq.startswith("W"):
-        seas = transforms.seasonalise_weekly(df, freq=histfreq)
+        seas = transforms.seasonalise_weekly(df)
     else:
         seas = transforms.seasonailse(df)
 
