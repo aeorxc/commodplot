@@ -78,7 +78,7 @@ def clean_seas_df_for_min_max_average(seas, range):
     # only consider when we have full(er) data for a given range
     fulldata = pd.DataFrame(seasf.isna().sum())  # count non-na values
     if (
-        not (fulldata == 0).all().iloc[0]
+            not (fulldata == 0).all().iloc[0]
     ):  # line below doesn't apply when we have full data for all columns
         fulldata = fulldata[
             fulldata.apply(lambda x: np.abs(x - x.mean()) / x.std() < 1.5).all(axis=1)
@@ -188,7 +188,7 @@ def average_line_trace(seas, average_line):
 
 
 def timeseries_to_seas_trace(
-    seas, text, dash=None, showlegend=True, visible_line_years=None
+        seas, text, dash=None, showlegend=True, visible_line_years=None
 ):
     """
     Given a dataframe of reindexed data, generate traces for every year
@@ -220,12 +220,12 @@ def timeseries_to_seas_trace(
 
 
 def timeseries_to_reindex_year_trace(
-    dft,
-    text,
-    dash=None,
-    current_select_year=None,
-    showlegend=True,
-    visible_line_years=None,
+        dft,
+        text,
+        dash=None,
+        current_select_year=None,
+        showlegend=True,
+        visible_line_years=None,
 ):
     traces = []
     colyearmap = cpu.dates.find_year(dft)
@@ -381,7 +381,7 @@ def timeseries_trace(series: pd.Series, **kwargs) -> go.Scatter:
 
 
 def timeseries_trace_by_year(
-    series: pd.Series, colyear: int, promptyear: int = None, **kwargs
+        series: pd.Series, colyear: int, promptyear: int = None, **kwargs
 ) -> go.Scatter:
     """
     Return a timeseries trace with formatting applied for a given year
@@ -424,18 +424,23 @@ def line_plot_traces(df, fwd=None, **kwargs):
     """
     traces = []
     colyearmap = cpu.dates.find_year(df)
+    visible_lines = kwargs.get("visible_lines", None)
     colcount = 0
     for col in df.columns:
         colyear = colyearmap[col]
+
         if isinstance(colyear, int) or (
-            isinstance(colyear, str) and colyear.isnumeric()
+                isinstance(colyear, str) and colyear.isnumeric()
         ):
             trace = timeseries_trace_by_year(
                 df[col], colyear, legendgroup=col
             )  # , text, **kwargs)
         else:
+            visible = True
+            if visible_lines is not None and col not in visible_lines:
+                visible = "legendonly"
             trace = timeseries_trace(
-                df[col], legendgroup=col, color=get_sequence_line_col(colcount)
+                df[col], legendgroup=col, color=get_sequence_line_col(colcount), visible=visible,
             )  #
 
         traces.append(trace)
@@ -448,7 +453,7 @@ def line_plot_traces(df, fwd=None, **kwargs):
                     f, df.index[-1]
                 )  # only applies for forward curves
             if isinstance(colyear, int) or (
-                isinstance(colyear, str) and colyear.isnumeric()
+                    isinstance(colyear, str) and colyear.isnumeric()
             ):
                 trace = timeseries_trace_by_year(
                     f,
@@ -457,12 +462,16 @@ def line_plot_traces(df, fwd=None, **kwargs):
                     showlegend=False,
                 )  # , text, **kwargs)
             else:
+                visible = True
+                if visible_lines is not None and col not in visible_lines:
+                    visible = "legendonly"
                 trace = timeseries_trace(
                     f,
                     dash="dash",
                     legendgroup=col,
                     showlegend=False,
                     color=get_sequence_line_col(colcount),
+                    visible=visible
                 )
             traces.append(trace)
 
