@@ -423,14 +423,16 @@ def line_plot_traces(df, fwd=None, **kwargs):
     :return:
     """
     traces = []
+    colyearmap_enabled = kwargs.get("colyearmap_enabled", True)
     colyearmap = cpu.dates.find_year(df)
     visible_lines = kwargs.get("visible_lines", None)
+
     colcount = 0
     for col in df.columns:
         colyear = colyearmap[col]
 
-        if isinstance(colyear, int) or (
-                isinstance(colyear, str) and colyear.isnumeric()
+        if colyearmap_enabled and (isinstance(colyear, int) or (
+                isinstance(colyear, str) and colyear.isnumeric())
         ):
             trace = timeseries_trace_by_year(
                 df[col], colyear, legendgroup=col

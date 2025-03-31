@@ -641,6 +641,7 @@ def reindex_year_line_subplot(rows, cols, dfs, **kwargs):
 
 def line_plot(df, fwd=None, **kwargs):
     fig = go.Figure()
+    kwargs['colyearmap_enabled'] = False # dont enable colyearmap for line plot as it doesn't apply in this context
     res = cptr.line_plot_traces(df, fwd, **kwargs)
     for trace in res:
         fig.add_trace(trace)
