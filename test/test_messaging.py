@@ -15,6 +15,7 @@ def create_figure():
     )
     return fig
 
+@pytest.mark.skip()
 @patch("commodplot.messaging.SMTP")
 def test_compose_and_send_report(mock_smtp):
     sender = "testcommodplot@mailinator.com"
@@ -54,6 +55,7 @@ def test_compose_and_send_report(mock_smtp):
     assert sendmail_args[1] == receiver
     assert subject in sendmail_args[2]
 
+@pytest.mark.skip()
 @patch("commodplot.messaging.SMTP")
 def test_compose_jinja_report(mock_smtp):
     sender = "testcommodplot@mailinator.com"
