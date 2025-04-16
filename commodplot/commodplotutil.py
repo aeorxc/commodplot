@@ -77,11 +77,11 @@ def seas_table(hist, fwd=None):
     summer = summary.iloc[[1, 2], :].mean()
     summer.name = "Q2+Q3"
     summary.index = ["Q1", "Q2", "Q3", "Q4"]
-    summary = summary.append(winter)
-    summary = summary.append(summer)
+    summary = pd.concat([summary, pd.DataFrame([winter])])
+    summary = pd.concat([summary, pd.DataFrame([summer])])
     cal = df.resample("Y").mean().iloc[0]
     cal.name = "Year"
-    summary = summary.append(cal)
+    summary = pd.concat([summary, pd.DataFrame([cal])])
     summary = summary.round(2)
 
     df.index = df.index.strftime("%b")

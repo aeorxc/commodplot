@@ -198,7 +198,7 @@ def table_plot(df, **kwargs):
     ]
 
     if isinstance(df.index, pd.DatetimeIndex):  # if index is datetime, format dates
-        df.index = df.index.map(lambda x: x.strftime("%d-%m-%Y"), 1)
+        df.index = df.index.map(lambda x: x.strftime("%d-%m-%Y"), )
     cols.insert(0, df.index)
 
     fig = go.Figure(

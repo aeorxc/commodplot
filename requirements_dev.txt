@@ -1,5 +1,4 @@
 -r requirements.txt
-cufflinks
 pytest
 coverage
 pylint

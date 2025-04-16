@@ -30,38 +30,50 @@ def convert_dict_plotly_fig_png(d):
 
 def plpng(fig):
     """
-    Given a plotly figure, return it as a png
+    Given a plotly figure, return it as a png embedded in an img tag.
+    Uses Plotly's export function with the Kaleido engine.
     """
-    image = base64.b64encode(pl.io.to_image(fig)).decode("ascii")
-    res = f'<img src="data:image/png;base64,{image}">'
-    return res
+    image = fig.to_image(format="png", engine="kaleido")
+    # The output is already bytes, so encode to base64 only if necessary.
+    # Here we use Plotly's built-in conversion to image.
+    import base64
+    image_b64 = base64.b64encode(image).decode("ascii")
+    return f'<img src="data:image/png;base64,{image_b64}">'
 
 
-def convert_dict_plotly_fig_html_div(d):
+def convert_dict_plotly_fig_html_div(d, interactive=True):
     """
-    Given a dict (that might be passed to jinja), convert all plotly figures of html divs
+    Given a dict (that might be passed to jinja), convert all plotly figures to html divs
+    or png images depending on the interactive flag.
     """
     for k, v in d.items():
         if isinstance(d[k], go.Figure):
-            d[k] = plhtml(d[k])
+            d[k] = plhtml(d[k], interactive=interactive)
         if isinstance(d[k], dict):
-            convert_dict_plotly_fig_html_div(d[k])
-
+            convert_dict_plotly_fig_html_div(d[k], interactive=interactive)
+        if isinstance(d[k], list):
+            for count, item in enumerate(d[k]):
+                if isinstance(item, go.Figure):
+                    d[k][count] = plhtml(item, interactive=interactive)
+                    d[k][count] = plhtml(item, interactive=interactive)
     return d
 
 
-def plhtml(fig, margin=narrow_margin, **kwargs):
+def plhtml(fig, interactive=True, margin=narrow_margin, **kwargs):
     """
-    Given a plotly figure, return it as a div
+    Given a plotly figure, return it as a div if interactive is True,
+    or as a static png image if interactive is False.
     """
-    if fig is not None:
-        fig.update_layout(margin=margin)
-
-        fig.update_xaxes(automargin=True)
-        fig.update_yaxes(automargin=True)
+    if fig is None:
+        return ""
+    fig.update_layout(margin=margin)
+    fig.update_xaxes(automargin=True)
+    fig.update_yaxes(automargin=True)
+    if interactive:
         return pl.offline.plot(fig, include_plotlyjs=False, output_type="div")
-
-    return ""
+    else:
+        # Render as a static image
+        return plpng(fig)
 
 
 def render_html(
