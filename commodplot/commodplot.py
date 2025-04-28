@@ -538,11 +538,11 @@ def stacked_grouped_bar_chart(df, **kwargs):
         freq = pd.infer_freq(df.index)
         if freq is not None:
             if freq in ("M", "MS", "ME"):
-                df.index = df.index.map(lambda x: x.strftime("%m-%Y"), 1)
+                df.index = df.index.map(lambda x: x.strftime("%m-%Y"))
             if freq in ("Y", "YS", "YE"):
-                df.index = df.index.map(lambda x: x.year, 1)
+                df.index = df.index.map(lambda x: x.year )
             if freq in ("D", "B"):
-                df.index = df.index.map(lambda x: x.date(), 1)
+                df.index = df.index.map(lambda x: x.date())
 
     i = 0
     for col in df.columns:
