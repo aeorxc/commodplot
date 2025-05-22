@@ -1,15 +1,13 @@
-import base64
-import logging
 import os
 from datetime import datetime
 
 import plotly as pl
+import plotly.graph_objects as go
+import logging
 from jinja2 import PackageLoader, FileSystemLoader, Environment
-from plotly import graph_objects as go
 
-# margin to use in HTML charts - make charts bigger but leave space for title
+
 narrow_margin = {"l": 2, "r": 2, "t": 30, "b": 10}
-
 
 def convert_dict_plotly_fig_png(d):
     """
@@ -29,16 +27,19 @@ def convert_dict_plotly_fig_png(d):
 
 
 def plpng(fig):
-    """
-    Given a plotly figure, return it as a png embedded in an img tag.
-    Uses Plotly's export function with the Kaleido engine.
-    """
-    image = fig.to_image(format="png", engine="kaleido")
-    # The output is already bytes, so encode to base64 only if necessary.
-    # Here we use Plotly's built-in conversion to image.
+    """Convert a plotly figure to a PNG image embedded in a data URI"""
+    import plotly.io as pio
     import base64
-    image_b64 = base64.b64encode(image).decode("ascii")
-    return f'<img src="data:image/png;base64,{image_b64}">'
+
+    # Get binary PNG data without trying to decode it
+    img_bytes = pio.to_image(fig, format='png')
+
+    # Base64 encode the binary data
+    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+    # Return as data URI
+    return f'<img src="data:image/png;base64,{img_base64}">'
+
 
 
 def convert_dict_plotly_fig_html_div(d, interactive=True):
@@ -55,7 +56,6 @@ def convert_dict_plotly_fig_html_div(d, interactive=True):
             for count, item in enumerate(d[k]):
                 if isinstance(item, go.Figure):
                     d[k][count] = plhtml(item, interactive=interactive)
-                    d[k][count] = plhtml(item, interactive=interactive)
     return d
 
 
@@ -66,13 +66,14 @@ def plhtml(fig, interactive=True, margin=narrow_margin, **kwargs):
     """
     if fig is None:
         return ""
+
     fig.update_layout(margin=margin)
     fig.update_xaxes(automargin=True)
     fig.update_yaxes(automargin=True)
+
     if interactive:
-        return pl.offline.plot(fig, include_plotlyjs=False, output_type="div")
+        return pl.offline.plot(fig, include_plotlyjs='cdn', output_type="div")
     else:
-        # Render as a static image
         return plpng(fig)
 
 
