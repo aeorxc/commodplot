@@ -530,7 +530,16 @@ def stacked_grouped_bar_chart(df, **kwargs):
             px.colors.qualitative.Plotly[: len(df.columns.levels[1])],
         )
     )
-    showlegend = [i % len(df.columns.levels[0]) == 0 for i in range(len(df.columns))]
+
+    seen_sources = set()
+    showlegend = []
+
+    for src, prod in df.columns:
+        if src not in seen_sources:
+            showlegend.append(True)
+            seen_sources.add(src)
+        else:
+            showlegend.append(False)
 
     # xaxis_tickformat doesn't appear to work so have to format the dataframe index
     if isinstance(df.index, pd.DatetimeIndex):
