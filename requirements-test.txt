@@ -1,6 +1,14 @@
--r requirements.txt
+# Unit-Test framework and extensions.
 pytest
-coverage
+pytest-mock
+
+# Additional packages for pytest to run in CI and calculate code coverage.
+pytest-azurepipelines
+pytest-cov
+
 pylint
 black
 mypy
+
+# Include dev requirements.
+-r requirements.txt
