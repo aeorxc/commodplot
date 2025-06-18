@@ -531,13 +531,12 @@ def stacked_grouped_bar_chart(df, **kwargs):
         )
     )
 
-    seen_sources = set()
+    seen_commod = set()
     showlegend = []
-
     for src, prod in df.columns:
-        if src not in seen_sources:
+        if prod not in seen_commod:
             showlegend.append(True)
-            seen_sources.add(src)
+            seen_commod.add(prod)
         else:
             showlegend.append(False)
 
