@@ -82,7 +82,7 @@ def seas_table(hist, fwd=None):
     cal = df.resample("Y").mean().iloc[0]
     cal.name = "Year"
     summary = pd.concat([summary, pd.DataFrame([cal])])
-    summary = summary.round(2)
+    summary = round(summary, 2)
 
     df.index = df.index.strftime("%b")
     df = pd.concat([df, summary], sort=False).round(2)
@@ -100,13 +100,13 @@ def delta_summary_str(df, precision_format: str = None):
     df = df.dropna()
     val1 = df.iloc[-1]
     val2 = df.iloc[-2]
-    delta = (val1 - val2).round(2)
+    delta = round(val1 - val2, 2)
     symb = "+" if delta > 0.0 else ""
 
     if precision_format:
         val1, delta = precision_format.format(val1), precision_format.format(delta)
     else:
-        val1 = val1.round(2)
+        val1 = round(val1, 2)
 
     s = "{}   \u0394: {}{}".format(val1, symb, delta)
     return s
