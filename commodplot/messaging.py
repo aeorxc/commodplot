@@ -125,12 +125,25 @@ def compose_and_send_report(
 
     message = message.build()
     logger.info("Sending report e-mail to %s", receiver_email)
+    
+    # Handle semicolon-separated email addresses (convert to list for SMTP compatibility)
+    if isinstance(receiver_email, str):
+        if ';' in receiver_email:
+            recipient_list = [email.strip() for email in receiver_email.split(';') if email.strip()]
+        elif ',' in receiver_email:
+            recipient_list = [email.strip() for email in receiver_email.split(',') if email.strip()]
+        else:
+            recipient_list = [receiver_email.strip()]
+    else:
+        # Already a list
+        recipient_list = receiver_email
+    
     try:
         with SMTP(smtp_host, smtp_port, timeout=smtp_timeout) as client:
             # client.set_debuglevel(1)
             client.connect(smtp_host, smtp_port)
             client.starttls()
-            client.sendmail(sender_email, receiver_email, message)
+            client.sendmail(sender_email, recipient_list, message)
             client.close()
         logger.info("Report sent successfully")
     except SMTPException as ex:
