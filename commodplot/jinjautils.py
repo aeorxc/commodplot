@@ -88,27 +88,56 @@ def render_html(
     """
     Using a Jinja2 template, render html file and return as string
     :param data: dict of jinja parameters to include in rendered html
-    :param template: absolute location of template file
+    :param template: absolute location of template file OR template name when using package loader
     :param package_loader_name: if using PackageLoader instead of FileLoader specify package name
-    :return:
+    :param template_globals: dict of global variables to add to template context
+    :param plotly_image_conv_func: function to convert plotly figures in data dict
+    :param filename: if provided, save rendered output to this file
+    :return: rendered HTML string
     """
     data = plotly_image_conv_func(data)
 
-    tdirname, tfilename = os.path.split(os.path.abspath(template))
+    # Handle template path/name based on loader type
+    from jinja2 import ChoiceLoader
+    
     if package_loader_name:
-        loader = PackageLoader(package_loader_name, "templates")
+        # Use a ChoiceLoader to allow inheritance from both the specified package and commodplot
+        loader = ChoiceLoader([
+            PackageLoader(package_loader_name, "templates"),  # Project templates first
+            PackageLoader('commodplot', 'templates')  # Fall back to commodplot templates
+        ])
+        tfilename = template  # When using PackageLoader, template is just the name
     else:
-        loader = FileSystemLoader(tdirname)
+        # Use a ChoiceLoader to allow inheritance from both commodplot and local templates
+        tdirname, tfilename = os.path.split(os.path.abspath(template))
+        loader = ChoiceLoader([
+            FileSystemLoader(tdirname),  # Local templates first
+            PackageLoader('commodplot', 'templates')  # Fall back to commodplot templates
+        ])
+    
     env = Environment(loader=loader)
     env.finalize = jinja_finalize
-    template = env.get_template(tfilename)
+    
+    try:
+        template = env.get_template(tfilename)
+    except Exception as e:
+        logging.error(f"Template '{tfilename}' not found. Available templates: {env.list_templates()[:10]}")
+        raise
+    
     if template_globals:
         for template_global in template_globals:
             template.globals[template_global] = template_globals[template_global]
 
-    output = template.render(
-        pagetitle=data["name"], last_gen_time=datetime.now(), data=data
-    )
+    try:
+        output = template.render(
+            pagetitle=data.get("name", ""),  # Make name optional
+            last_gen_time=datetime.now(),
+            data=data
+        )
+    except Exception as e:
+        logging.error(f"Error rendering template '{tfilename}': {str(e)}")
+        logging.debug(f"Available variables: pagetitle={data.get('name', '')}, data keys={list(data.keys())}")
+        raise
 
     if filename:
         render_html_to_file(filename, output)

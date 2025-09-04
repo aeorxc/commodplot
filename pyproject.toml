@@ -39,3 +39,6 @@ test = [
 where = ["."]
 include = ["commodplot*"]
 exclude = ["tests*", "*.tests*", "tests.*"]
+
+[tool.setuptools.package-data]
+commodplot = ["templates/*.html", "templates/*.css"]

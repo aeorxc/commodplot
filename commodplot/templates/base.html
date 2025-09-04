@@ -1,19 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-          integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" rel="stylesheet">
-    <title>{{ pagetitle }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    {# Plotly.js - Note: plotly-latest is stuck at v1.58.5, using explicit version #}
+    {% block plotly_version %}
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+    {% endblock plotly_version %}
+    
+    {# Bootstrap CSS - Can be overridden in child templates for different versions #}
+    {% block bootstrap_css %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    {% endblock bootstrap_css %}
+    
+    <title>{% block title %}{{ data.title if data and data.title else pagetitle }}{% endblock %}</title>
+    {% block additional_head %}{% endblock %}
+    {% block custom_styles %}{% endblock %}
 </head>
 <body>
-<p align="right">Last generated: {{ last_gen_time.strftime('%d %b %Y %H:%M') }}</p>
-<a id="top"></a>
+    {% block header %}
+    <div style="text-align: right;">
+        <p style="display: inline-block; margin-right: 10px;">
+            Last generated: {{ data.last_gen_time.strftime('%d %b %Y %H:%M') if data and data.last_gen_time else last_gen_time.strftime('%d %b %Y %H:%M') }}
+        </p>
+        {% if data and data.flow_run_id %}
+        <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}" target="_blank" 
+           title="Prefect Flow Run" style="display: inline-block; vertical-align: middle;">
+            <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
+        </a>
+        {% elif 'prefect_link' in data %}
+        {# Legacy Prefect 2 link support #}
+        <a href="{{ data['prefect_link'] }}">Prefect Link</a>
+        {% endif %}
+    </div>
+    {% endblock header %}
 
-<h2>{{ pagetitle }}</h2>
+    <a id="top"></a>
 
-{% block content %}{% endblock %}
+    {% block navigation %}
+    {# Child templates can override this block to add navigation menus #}
+    {% endblock navigation %}
 
-<a href="#top">Back to top</a>
+    {% block page_title %}
+    {# Optional: Override this block to add a custom page title section #}
+    {% if data and data.title %}
+    <h2>{{ data.title }}</h2>
+    {% elif pagetitle %}
+    <h2>{{ pagetitle }}</h2>
+    {% endif %}
+    {% endblock page_title %}
+
+    {% block content %}
+    {# Main content goes here - this must be overridden by child templates #}
+    {% endblock content %}
+
+    {% block footer %}
+    <a href="#top">Back to top</a>
+    {% endblock footer %}
+
+    {% block scripts %}
+    {# Additional scripts can be added here by child templates #}
+    {% endblock scripts %}
 </body>
 </html>

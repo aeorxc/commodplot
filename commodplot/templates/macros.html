@@ -1,0 +1,87 @@
+{# Common macros for oil trading reports #}
+
+{# Navigation table macro #}
+{% macro nav_table(links) %}
+<table border="2">
+    <tr>
+    {% for text, url in links %}
+        <td><a href="{{ url }}">{{ text }}</a></td>
+    {% endfor %}
+    </tr>
+</table>
+{% endmacro %}
+
+{# Bootstrap nav pills macro #}
+{% macro nav_pills(links, current_page=None) %}
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col">
+            <nav class="nav nav-pills nav-fill bg-light p-2 rounded shadow-sm">
+                {% for text, url in links %}
+                <a class="nav-item nav-link {% if url == current_page %}active{% endif %}" href="{{ url }}">{{ text }}</a>
+                {% endfor %}
+            </nav>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{# Chart grid macro for responsive layouts #}
+{% macro chart_grid(charts, cols=3) %}
+<div class="row no-gutters">
+    {% for chart in charts %}
+    <div class="col-md-{{ 12 // cols }}">
+        <p>{{ chart|safe }}</p>
+    </div>
+    {% if loop.index % cols == 0 and not loop.last %}
+</div>
+<div class="row no-gutters">
+    {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{# Data table with formatting #}
+{% macro data_table(df, title=None, css_class="table table-striped") %}
+{% if title %}<h3>{{ title }}</h3>{% endif %}
+<div class="table-responsive">
+    {{ df.to_html(classes=css_class, index=True)|safe }}
+</div>
+{% endmacro %}
+
+{# Alert/warning box #}
+{% macro alert_box(message, type="info") %}
+<div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endmacro %}
+
+{# Collapsible section #}
+{% macro collapsible(title, content, id, expanded=False) %}
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading{{ id }}">
+        <button class="accordion-button {% if not expanded %}collapsed{% endif %}" type="button" 
+                data-bs-toggle="collapse" data-bs-target="#collapse{{ id }}" 
+                aria-expanded="{{ expanded|lower }}" aria-controls="collapse{{ id }}">
+            {{ title }}
+        </button>
+    </h2>
+    <div id="collapse{{ id }}" class="accordion-collapse collapse {% if expanded %}show{% endif %}" 
+         aria-labelledby="heading{{ id }}">
+        <div class="accordion-body">
+            {{ content|safe }}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{# Report metadata display #}
+{% macro report_metadata(data) %}
+<div class="text-muted small">
+    {% if data.author %}<span>Author: {{ data.author }}</span> | {% endif %}
+    {% if data.version %}<span>Version: {{ data.version }}</span> | {% endif %}
+    {% if data.environment %}<span>Environment: {{ data.environment }}</span> | {% endif %}
+    {% if data.run_time %}<span>Run time: {{ data.run_time }}s</span>{% endif %}
+</div>
+{% endmacro %}
