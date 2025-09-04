@@ -1,0 +1,126 @@
+/* Common styles for oil trading reports */
+
+/* Table styles for data presentation */
+.oil-data-table {
+    font-size: 0.9em;
+}
+
+.oil-data-table td {
+    padding: 4px 8px;
+}
+
+.oil-data-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Highlight positive/negative values */
+.positive {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.negative {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Seasonal chart container */
+.chart-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+/* Report header styling */
+.report-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 5px;
+}
+
+/* Navigation improvements */
+.nav-pills .nav-link {
+    color: #495057;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.nav-pills .nav-link.active {
+    background-color: #667eea;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .page-break {
+        page-break-after: always;
+    }
+    
+    .chart-container {
+        page-break-inside: avoid;
+    }
+}
+
+/* Responsive table wrapper */
+.table-responsive-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tooltips for help text */
+.help-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.help-tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.help-tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
