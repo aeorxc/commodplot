@@ -17,31 +17,75 @@
     
     <title>{% block title %}{{ data.title if data and data.title else pagetitle }}{% endblock %}</title>
     {% block additional_head %}{% endblock %}
+    
+    <style>
+        /* Fixed navbar styling */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1050;
+            padding: 0.25rem 1rem;
+            min-height: 40px;
+        }
+        .navbar-brand {
+            font-size: 1rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        .navbar .nav-link {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        /* Prevent content hiding under navbar */
+        body {
+            padding-top: 55px;
+        }
+        /* Metadata styling in navbar */
+        .navbar-metadata {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        /* Adjust floating ToC position if present */
+        .floating-toc {
+            top: 65px;
+        }
+    </style>
     {% block custom_styles %}{% endblock %}
 </head>
 <body>
     {% block header %}
-    <div style="text-align: right;">
-        <p style="display: inline-block; margin-right: 10px;">
-            Last generated: {{ data.last_gen_time.strftime('%d %b %Y %H:%M') if data and data.last_gen_time else last_gen_time.strftime('%d %b %Y %H:%M') }}
-        </p>
-        {% if data and data.flow_run_id %}
-        <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}" target="_blank" 
-           title="Prefect Flow Run" style="display: inline-block; vertical-align: middle;">
-            <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
-        </a>
-        {% elif 'prefect_link' in data %}
-        {# Legacy Prefect 2 link support #}
-        <a href="{{ data['prefect_link'] }}">Prefect Link</a>
-        {% endif %}
-    </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            {% block navbar_content %}
+            <div class="navbar-nav me-auto">
+                {% block navigation %}
+                {# Child templates can add navigation items here #}
+                {% endblock navigation %}
+            </div>
+            
+            {# Metadata section on the right #}
+            <div class="navbar-metadata d-flex align-items-center">
+                <span class="me-3">
+                    Last generated: {{ data.last_gen_time.strftime('%d %b %Y %H:%M') if data and data.last_gen_time else last_gen_time.strftime('%d %b %Y %H:%M') }}
+                </span>
+                {% if data and data.flow_run_id %}
+                <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}" 
+                   target="_blank" title="Prefect Flow Run">
+                    <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
+                </a>
+                {% elif 'prefect_link' in data %}
+                <a href="{{ data['prefect_link'] }}" title="Prefect Link">
+                    <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
+                </a>
+                {% endif %}
+            </div>
+            {% endblock navbar_content %}
+        </div>
+    </nav>
     {% endblock header %}
 
     <a id="top"></a>
-
-    {% block navigation %}
-    {# Child templates can override this block to add navigation menus #}
-    {% endblock navigation %}
 
     {% block page_title %}
     {# Optional: Override this block to add a custom page title section #}
