@@ -32,12 +32,13 @@ def get_sequence_line_col(seqno: int):
         return plotly.colors.qualitative.Plotly[seqno]
 
 
-def line_visible(year, visible_line_years=None):
+def line_visible(year, visible_line_years=None, col_name=None):
     """
     Determine the number of year lines to be visible in seasonal plot
-    :param year:
-    :param years_to_include:
-    :return:
+    :param year: Year value to check visibility for
+    :param visible_line_years: Number of past years to show (optional)
+    :param col_name: Column name to identify current active quarter (optional)
+    :return: None (visible), "legendonly" (hidden but clickable)
     """
     delta = get_year_line_delta(year)
     if delta is None:
@@ -46,8 +47,15 @@ def line_visible(year, visible_line_years=None):
         visible_line_years = visible_line_years * -1  # number of years to go back
     else:
         visible_line_years = -5  # default to 5
-    # 3 represents number of years in the future to show
-    return None if visible_line_years <= delta <= 3 else "legendonly"
+
+    # If col_name provided and matches this year, show it (even if future)
+    if delta > 0:
+        if col_name and str(year) in str(col_name):
+            return None
+        else:
+            return "legendonly"
+
+    return None if visible_line_years <= delta <= 0 else "legendonly"
 
 
 def get_year_line_delta(year):
@@ -245,7 +253,7 @@ def timeseries_to_reindex_year_trace(
             name=str(col),
             hovertemplate=hovertemplate_default,
             text=text,
-            visible=line_visible(colyear, visible_line_years=visible_line_years),
+            visible=line_visible(colyear, visible_line_years=visible_line_years, col_name=current_select_year),
             line=dict(color=get_year_line_col(colyear), dash=dash, width=width),
             showlegend=showlegend,
             legendgroup=str(col),
