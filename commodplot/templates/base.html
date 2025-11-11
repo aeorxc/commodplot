@@ -69,8 +69,18 @@
                 <span class="me-3">
                     Last generated: {{ data.last_gen_time.strftime('%d %b %Y %H:%M') if data and data.last_gen_time else last_gen_time.strftime('%d %b %Y %H:%M') }}
                 </span>
+                {% if data and data.permalink %}
+                <a href="{{ data.permalink }}" target="_blank" title="Production Permalink" class="me-2">
+                    <span class="badge bg-success">🔗 PROD</span>
+                </a>
+                {% endif %}
+                {% if data and data.permalink_staging %}
+                <a href="{{ data.permalink_staging }}" target="_blank" title="Staging Permalink" class="me-2">
+                    <span class="badge bg-warning text-dark">🔗 STG</span>
+                </a>
+                {% endif %}
                 {% if data and data.flow_run_id %}
-                <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}" 
+                <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}"
                    target="_blank" title="Prefect Flow Run">
                     <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
                 </a>
