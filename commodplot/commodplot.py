@@ -459,6 +459,131 @@ def stacked_area_chart(df, **kwargs):
     return fig
 
 
+def dataframe_to_echarts_stacked_area(df, **kwargs):
+    """
+    Convert a timeseries DataFrame to ECharts stacked area configuration.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame with DatetimeIndex and columns representing different series.
+        Values should be numeric (e.g., capacity offline in kb/d).
+
+    **kwargs:
+        title : str, optional
+            Chart title
+        yaxis_title : str, optional
+            Y-axis label
+        height : int, optional
+            Chart height in pixels (default 500)
+
+    Returns:
+    --------
+    dict : ECharts option configuration
+
+    Example:
+    --------
+    >>> config = dataframe_to_echarts_stacked_area(
+    ...     df,
+    ...     title="IIR CDU Outages: MIDDLE EAST",
+    ...     yaxis_title="Capacity Offline (kb/d)"
+    ... )
+    >>> # Use in Dash: DashECharts(option=config, style={'height': '500px'})
+    """
+
+    # Prepare data
+    dates_str = df.index.strftime('%Y-%m-%d').tolist()
+    series_names = df.columns.tolist()
+
+    # Create series configuration
+    series = []
+    colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272',
+              '#fc8452', '#9a60b4', '#ea7ccc', '#5470c6', '#91cc75', '#fac858']
+
+    for idx, col in enumerate(df.columns):
+        series.append({
+            'name': col,
+            'type': 'line',
+            'stack': 'Total',
+            'areaStyle': {},
+            'emphasis': {
+                'focus': 'series'
+            },
+            'data': df[col].tolist(),
+            'color': colors[idx % len(colors)]
+        })
+
+    # Build ECharts option
+    option = {
+        'title': {
+            'text': kwargs.get('title', ''),
+            'left': 'left'
+        },
+        'tooltip': {
+            'trigger': 'axis',
+            'axisPointer': {
+                'type': 'cross',
+                'label': {
+                    'backgroundColor': '#6a7985'
+                }
+            }
+        },
+        'legend': {
+            'data': series_names,
+            'type': 'scroll',
+            'orient': 'vertical',
+            'right': 10,
+            'top': 50,
+            'bottom': 20,
+            'pageButtonPosition': 'end'
+        },
+        'toolbox': {
+            'feature': {
+                'dataZoom': {
+                    'yAxisIndex': 'none'
+                },
+                'restore': {},
+                'saveAsImage': {}
+            },
+            'right': 20
+        },
+        'grid': {
+            'left': '3%',
+            'right': '18%',
+            'bottom': 100,
+            'top': 60,
+            'containLabel': True
+        },
+        'xAxis': {
+            'type': 'category',
+            'boundaryGap': False,
+            'data': dates_str
+        },
+        'yAxis': {
+            'type': 'value',
+            'name': kwargs.get('yaxis_title', ''),
+            'axisLabel': {
+                'formatter': '{value}'
+            }
+        },
+        'dataZoom': [
+            {
+                'type': 'inside',
+                'start': 0,
+                'end': 100
+            },
+            {
+                'type': 'slider',
+                'start': 0,
+                'end': 100
+            }
+        ],
+        'series': series
+    }
+
+    return option
+
+
 def stacked_area_chart_negative_cols(df, **kwargs):
     """
     Similar to stacked_area_chart except showing negative columns as a separate stackgroup
