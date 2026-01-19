@@ -21,6 +21,10 @@ def seas_line_plot(df, fwd=None, **kwargs):
     """
     Given a DataFrame produce a seasonal line plot (x-axis - Jan-Dec, y-axis Yearly lines)
     Can overlay a forward curve on top of this
+
+    Additional kwargs:
+        template: str - Plotly template (e.g., 'plotly_white' for white background)
+        line_mode: str - Line mode for traces (e.g., 'lines' for no markers)
     """
     df = df.sort_index()
 
@@ -49,15 +53,21 @@ def seas_line_plot(df, fwd=None, **kwargs):
     legend = go.layout.Legend(font=dict(size=10), traceorder="reversed")
     yaxis_title = kwargs.get("yaxis_title", None)
     hovermode = kwargs.get("hovermode", "x")
-    fig.update_layout(
-        title=title,
-        title_x=0.01,
-        xaxis_tickformat="%b",
-        yaxis_title=yaxis_title,
-        legend=legend,
-        hovermode=hovermode,
-        margin=preset_margins,
-    )
+    template = kwargs.get("template", None)
+
+    layout_kwargs = {
+        "title": title,
+        "title_x": 0.01,
+        "xaxis_tickformat": "%b",
+        "yaxis_title": yaxis_title,
+        "legend": legend,
+        "hovermode": hovermode,
+        "margin": preset_margins,
+    }
+    if template:
+        layout_kwargs["template"] = template
+
+    fig.update_layout(**layout_kwargs)
 
     return fig
 

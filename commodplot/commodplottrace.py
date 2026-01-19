@@ -196,7 +196,7 @@ def average_line_trace(seas, average_line):
 
 
 def timeseries_to_seas_trace(
-        seas, text, dash=None, showlegend=True, visible_line_years=None
+        seas, text, dash=None, showlegend=True, visible_line_years=None, line_mode=None
 ):
     """
     Given a dataframe of reindexed data, generate traces for every year
@@ -204,24 +204,30 @@ def timeseries_to_seas_trace(
     :param text:
     :param dash:
     :param showlegend:
+    :param visible_line_years:
+    :param line_mode: Optional mode for traces (e.g., 'lines' for no markers)
     :return:
     """
     traces = []
     for col in seas.columns:
-        trace = go.Scatter(
-            x=seas.index,
-            y=seas[col],
-            hoverinfo="y",
-            name=str(col),
-            hovertemplate=hovertemplate_default,
-            text=text,
-            visible=line_visible(col, visible_line_years),
-            line=dict(
+        trace_kwargs = {
+            "x": seas.index,
+            "y": seas[col],
+            "hoverinfo": "y",
+            "name": str(col),
+            "hovertemplate": hovertemplate_default,
+            "text": text,
+            "visible": line_visible(col, visible_line_years),
+            "line": dict(
                 color=get_year_line_col(col), dash=dash, width=get_year_line_width(col)
             ),
-            showlegend=showlegend,
-            legendgroup=str(col),
-        )
+            "showlegend": showlegend,
+            "legendgroup": str(col),
+        }
+        if line_mode:
+            trace_kwargs["mode"] = line_mode
+
+        trace = go.Scatter(**trace_kwargs)
         traces.append(trace)
 
     return traces
@@ -284,6 +290,7 @@ def seas_plot_traces(df, fwd=None, **kwargs):
 
     showlegend = kwargs.get("showlegend", None)
     visible_line_years = kwargs.get("visible_line_years", None)
+    line_mode = kwargs.get("line_mode", None)
 
     # shaded range
     shaded_range = kwargs.get("shaded_range", None)
@@ -299,7 +306,8 @@ def seas_plot_traces(df, fwd=None, **kwargs):
 
     # historical / solid lines
     res["hist"] = timeseries_to_seas_trace(
-        seas, text, showlegend=showlegend, visible_line_years=visible_line_years
+        seas, text, showlegend=showlegend, visible_line_years=visible_line_years,
+        line_mode=line_mode
     )
 
     # fwd / dotted lines
@@ -313,7 +321,8 @@ def seas_plot_traces(df, fwd=None, **kwargs):
         fwdseas = cpt.seasonalise(fwd, histfreq=fwdfreq)
 
         res["fwd"] = timeseries_to_seas_trace(
-            fwdseas, text, showlegend=showlegend, dash="dot"
+            fwdseas, text, showlegend=showlegend, dash="dot",
+            line_mode=line_mode
         )
 
     return res
