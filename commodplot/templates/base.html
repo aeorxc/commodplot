@@ -80,7 +80,7 @@
                 </a>
                 {% endif %}
                 {% if data and data.flow_run_id %}
-                <a href="https://proximo.energy.local/prefect-3-server/runs/flow-run/{{ data.flow_run_id }}"
+                <a href="{{ data.prefect_base_url | default('https://proximo.energy.local/prefect-3-server') }}/runs/flow-run/{{ data.flow_run_id }}"
                    target="_blank" title="Prefect Flow Run">
                     <img src="https://cdn.worldvectorlogo.com/logos/prefect-1.svg" alt="Prefect" width="20" height="20">
                 </a>
