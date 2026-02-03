@@ -75,8 +75,14 @@ def plhtml(fig, interactive=True, margin=narrow_margin, **kwargs):
     fig.update_yaxes(automargin=True)
 
     if interactive:
+        # Optimized config to reduce HTML size and improve performance
+        config = {
+            'responsive': True,      # Auto-resize with container
+            'displaylogo': False,    # Remove Plotly logo
+            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],  # Remove unused tools
+        }
         # Don't include plotlyjs - it's already loaded in base.html
-        return pl.offline.plot(fig, include_plotlyjs=False, output_type="div")
+        return pl.offline.plot(fig, include_plotlyjs=False, output_type="div", config=config)
     else:
         return plpng(fig)
 

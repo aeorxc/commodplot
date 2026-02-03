@@ -12,6 +12,8 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
     {# Plotly.js - Note: plotly-latest is stuck at v1.58.5, using explicit version #}
+    {# Override this block with plotly-basic (850KB) if only using bar/pie/scatter charts #}
+    {# Available bundles: plotly-basic, plotly-cartesian, plotly-gl2d, plotly-finance #}
     {% block plotly_version %}
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
     {% endblock plotly_version %}
@@ -56,6 +58,12 @@
         /* Adjust floating ToC position if present */
         .floating-toc {
             top: 65px;
+        }
+
+        /* TradingView link styling */
+        .tradingview-link {
+            display: inline-block;
+            margin-right: 20px;
         }
 
         /* Price cell styling - replaces repeated inline styles */
