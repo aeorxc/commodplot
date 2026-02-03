@@ -24,8 +24,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/aeorxc/commodplot"
-Source = "https://github.com/aeorxc/commodplot"
+Homepage = "https://dev.azure.com/RWEST-MFI-TE/Oil/_git/commodplot"
+Source = "https://dev.azure.com/RWEST-MFI-TE/Oil/_git/commodplot"
 
 [project.optional-dependencies]
 test = [

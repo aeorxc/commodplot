@@ -63,6 +63,9 @@ def plhtml(fig, interactive=True, margin=narrow_margin, **kwargs):
     """
     Given a plotly figure, return it as a div if interactive is True,
     or as a static png image if interactive is False.
+
+    Note: Plotly.js is loaded once in base.html, so we set include_plotlyjs=False
+    to avoid duplicate script tags (which can add megabytes to page size).
     """
     if fig is None:
         return ""
@@ -72,7 +75,8 @@ def plhtml(fig, interactive=True, margin=narrow_margin, **kwargs):
     fig.update_yaxes(automargin=True)
 
     if interactive:
-        return pl.offline.plot(fig, include_plotlyjs='cdn', output_type="div")
+        # Don't include plotlyjs - it's already loaded in base.html
+        return pl.offline.plot(fig, include_plotlyjs=False, output_type="div")
     else:
         return plpng(fig)
 
