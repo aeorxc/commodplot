@@ -2,7 +2,11 @@ import pandas as pd
 import numpy as np
 from commodutil import dates
 from commodutil import transforms
-from commodutil import stats as custats
+
+try:
+    from commodutil import stats as custats
+except Exception:  # pragma: no cover
+    custats = None
 
 default_line_col = "khaki"
 
@@ -138,7 +142,37 @@ def reindex_year_df_rel_col(df):
     :param df:
     :return:
     """
-    return custats.select_reindex_prompt_column(df, within_days=10)
+    # Prefer core implementation in commodutil (newer versions).
+    if custats is not None and hasattr(custats, "select_reindex_prompt_column"):
+        return custats.select_reindex_prompt_column(df, within_days=10)
+
+    # Backwards compatibility for older commodutil versions.
+    res_col = df.columns[0]
+
+    years = dates.find_year(df)
+    last_val_date = df.index[-1]
+
+    colyears = [x for x in df if str(dates.curyear) in str(x)]
+    if len(colyears) > 0:
+        res_col = colyears[0]
+        relyear = pd.to_datetime(
+            "{}-01-01".format(years.get(res_col))
+        )  # year of this column
+
+        dft = df[colyears].dropna()
+        if len(dft) > 0:
+            relcol_date = df[res_col].dropna().index[-1]  # last date of this column
+
+            delta = last_val_date - relcol_date
+            if delta.days < 10:
+                relyear1 = (relyear + pd.DateOffset(years=1)).year
+                relyear1 = [x for x in df.columns if str(relyear1) in str(x)]
+                if len(relyear1) > 0:
+                    return relyear1[0]
+            else:
+                return res_col
+
+    return res_col
 
 
 def infer_freq(df):
