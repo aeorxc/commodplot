@@ -32,12 +32,13 @@ def get_sequence_line_col(seqno: int):
         return plotly.colors.qualitative.Plotly[seqno]
 
 
-def line_visible(year, visible_line_years=None):
+def line_visible(year, visible_line_years=None, col_name=None):
     """
     Determine the number of year lines to be visible in seasonal plot
-    :param year:
-    :param years_to_include:
-    :return:
+    :param year: Year value to check visibility for
+    :param visible_line_years: Number of past years to show (optional)
+    :param col_name: Column name to identify current active quarter (optional)
+    :return: None (visible), "legendonly" (hidden but clickable)
     """
     delta = get_year_line_delta(year)
     if delta is None:
@@ -46,8 +47,15 @@ def line_visible(year, visible_line_years=None):
         visible_line_years = visible_line_years * -1  # number of years to go back
     else:
         visible_line_years = -5  # default to 5
-    # 3 represents number of years in the future to show
-    return None if visible_line_years <= delta <= 3 else "legendonly"
+
+    # If col_name provided and matches this year, show it (even if future)
+    if delta > 0:
+        if col_name and str(year) in str(col_name):
+            return None
+        else:
+            return "legendonly"
+
+    return None if visible_line_years <= delta <= 0 else "legendonly"
 
 
 def get_year_line_delta(year):
@@ -188,7 +196,7 @@ def average_line_trace(seas, average_line):
 
 
 def timeseries_to_seas_trace(
-        seas, text, dash=None, showlegend=True, visible_line_years=None
+        seas, text, dash=None, showlegend=True, visible_line_years=None, line_mode=None
 ):
     """
     Given a dataframe of reindexed data, generate traces for every year
@@ -196,24 +204,30 @@ def timeseries_to_seas_trace(
     :param text:
     :param dash:
     :param showlegend:
+    :param visible_line_years:
+    :param line_mode: Optional mode for traces (e.g., 'lines' for no markers)
     :return:
     """
     traces = []
     for col in seas.columns:
-        trace = go.Scatter(
-            x=seas.index,
-            y=seas[col],
-            hoverinfo="y",
-            name=str(col),
-            hovertemplate=hovertemplate_default,
-            text=text,
-            visible=line_visible(col, visible_line_years),
-            line=dict(
+        trace_kwargs = {
+            "x": seas.index,
+            "y": seas[col],
+            "hoverinfo": "y",
+            "name": str(col),
+            "hovertemplate": hovertemplate_default,
+            "text": text,
+            "visible": line_visible(col, visible_line_years),
+            "line": dict(
                 color=get_year_line_col(col), dash=dash, width=get_year_line_width(col)
             ),
-            showlegend=showlegend,
-            legendgroup=str(col),
-        )
+            "showlegend": showlegend,
+            "legendgroup": str(col),
+        }
+        if line_mode:
+            trace_kwargs["mode"] = line_mode
+
+        trace = go.Scatter(**trace_kwargs)
         traces.append(trace)
 
     return traces
@@ -245,7 +259,7 @@ def timeseries_to_reindex_year_trace(
             name=str(col),
             hovertemplate=hovertemplate_default,
             text=text,
-            visible=line_visible(colyear, visible_line_years=visible_line_years),
+            visible=line_visible(colyear, visible_line_years=visible_line_years, col_name=current_select_year),
             line=dict(color=get_year_line_col(colyear), dash=dash, width=width),
             showlegend=showlegend,
             legendgroup=str(col),
@@ -276,6 +290,7 @@ def seas_plot_traces(df, fwd=None, **kwargs):
 
     showlegend = kwargs.get("showlegend", None)
     visible_line_years = kwargs.get("visible_line_years", None)
+    line_mode = kwargs.get("line_mode", None)
 
     # shaded range
     shaded_range = kwargs.get("shaded_range", None)
@@ -291,7 +306,8 @@ def seas_plot_traces(df, fwd=None, **kwargs):
 
     # historical / solid lines
     res["hist"] = timeseries_to_seas_trace(
-        seas, text, showlegend=showlegend, visible_line_years=visible_line_years
+        seas, text, showlegend=showlegend, visible_line_years=visible_line_years,
+        line_mode=line_mode
     )
 
     # fwd / dotted lines
@@ -305,7 +321,8 @@ def seas_plot_traces(df, fwd=None, **kwargs):
         fwdseas = cpt.seasonalise(fwd, histfreq=fwdfreq)
 
         res["fwd"] = timeseries_to_seas_trace(
-            fwdseas, text, showlegend=showlegend, dash="dot"
+            fwdseas, text, showlegend=showlegend, dash="dot",
+            line_mode=line_mode
         )
 
     return res
