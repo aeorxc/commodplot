@@ -8,6 +8,11 @@ def seasonalise(df, histfreq):
     :param df:
     :return:
     """
+    # Prefer core seasonalization in commodutil (newer versions).
+    if hasattr(transforms, "seasonalize"):
+        return transforms.seasonalize(df, histfreq=histfreq)
+
+    # Backwards compatibility for older commodutil versions.
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
 

@@ -3,6 +3,11 @@ import numpy as np
 from commodutil import dates
 from commodutil import transforms
 
+try:
+    from commodutil import stats as custats
+except Exception:  # pragma: no cover
+    custats = None
+
 default_line_col = "khaki"
 
 # try to put deeper colours for recent years, lighter colours for older years
@@ -137,6 +142,11 @@ def reindex_year_df_rel_col(df):
     :param df:
     :return:
     """
+    # Prefer core implementation in commodutil (newer versions).
+    if custats is not None and hasattr(custats, "select_reindex_prompt_column"):
+        return custats.select_reindex_prompt_column(df, within_days=10)
+
+    # Backwards compatibility for older commodutil versions.
     res_col = df.columns[0]
 
     years = dates.find_year(df)
