@@ -1,0 +1,3 @@
+# Local IDE / agent state (should not be committed)
+.idea/
+.system/
