@@ -208,7 +208,9 @@ def table_plot(df, **kwargs):
     ]
 
     if isinstance(df.index, pd.DatetimeIndex):  # if index is datetime, format dates
-        df.index = df.index.map(lambda x: x.strftime("%d-%m-%Y"), )
+        df.index = df.index.map(
+            lambda x: x.strftime("%d-%m-%Y"),
+        )
     cols.insert(0, df.index)
 
     fig = go.Figure(
@@ -473,6 +475,14 @@ def dataframe_to_echarts_stacked_area(df, **kwargs):
     """
     Convert a timeseries DataFrame to ECharts stacked area configuration.
 
+    TODO(bit-rot-cleanup 2026-05-21): scope leak — this is the only function in
+    commodplot that returns an ECharts JSON config (dict) rather than a Plotly
+    Figure. It belongs either in a sibling `commodplot-echarts` package or in
+    the (sole) consumer. As of the cleanup sweep the only known caller is a
+    commented-out block in oil-fundamentals-dashboard/pages/platts_tars.py:314
+    (and its worktree copy). Leave in place pending consumer decision; do not
+    add new callers — use Plotly stacked-area helpers instead.
+
     Parameters:
     -----------
     df : pd.DataFrame
@@ -502,93 +512,81 @@ def dataframe_to_echarts_stacked_area(df, **kwargs):
     """
 
     # Prepare data
-    dates_str = df.index.strftime('%Y-%m-%d').tolist()
+    dates_str = df.index.strftime("%Y-%m-%d").tolist()
     series_names = df.columns.tolist()
 
     # Create series configuration
     series = []
-    colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272',
-              '#fc8452', '#9a60b4', '#ea7ccc', '#5470c6', '#91cc75', '#fac858']
+    colors = [
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+        "#ee6666",
+        "#73c0de",
+        "#3ba272",
+        "#fc8452",
+        "#9a60b4",
+        "#ea7ccc",
+        "#5470c6",
+        "#91cc75",
+        "#fac858",
+    ]
 
     for idx, col in enumerate(df.columns):
-        series.append({
-            'name': col,
-            'type': 'line',
-            'stack': 'Total',
-            'areaStyle': {},
-            'emphasis': {
-                'focus': 'series'
-            },
-            'data': df[col].tolist(),
-            'color': colors[idx % len(colors)]
-        })
+        series.append(
+            {
+                "name": col,
+                "type": "line",
+                "stack": "Total",
+                "areaStyle": {},
+                "emphasis": {"focus": "series"},
+                "data": df[col].tolist(),
+                "color": colors[idx % len(colors)],
+            }
+        )
 
     # Build ECharts option
     option = {
-        'title': {
-            'text': kwargs.get('title', ''),
-            'left': 'left'
+        "title": {"text": kwargs.get("title", ""), "left": "left"},
+        "tooltip": {
+            "trigger": "axis",
+            "axisPointer": {"type": "cross", "label": {"backgroundColor": "#6a7985"}},
         },
-        'tooltip': {
-            'trigger': 'axis',
-            'axisPointer': {
-                'type': 'cross',
-                'label': {
-                    'backgroundColor': '#6a7985'
-                }
-            }
+        "legend": {
+            "data": series_names,
+            "type": "scroll",
+            "orient": "vertical",
+            "right": 10,
+            "top": 50,
+            "bottom": 20,
+            "pageButtonPosition": "end",
         },
-        'legend': {
-            'data': series_names,
-            'type': 'scroll',
-            'orient': 'vertical',
-            'right': 10,
-            'top': 50,
-            'bottom': 20,
-            'pageButtonPosition': 'end'
-        },
-        'toolbox': {
-            'feature': {
-                'dataZoom': {
-                    'yAxisIndex': 'none'
-                },
-                'restore': {},
-                'saveAsImage': {}
+        "toolbox": {
+            "feature": {
+                "dataZoom": {"yAxisIndex": "none"},
+                "restore": {},
+                "saveAsImage": {},
             },
-            'right': 20
+            "right": 20,
         },
-        'grid': {
-            'left': '3%',
-            'right': '18%',
-            'bottom': 100,
-            'top': 60,
-            'containLabel': True
+        "grid": {
+            "left": "3%",
+            "right": "18%",
+            "bottom": 100,
+            "top": 60,
+            "containLabel": True,
         },
-        'xAxis': {
-            'type': 'category',
-            'boundaryGap': False,
-            'data': dates_str
+        "xAxis": {"type": "category", "boundaryGap": False, "data": dates_str},
+        "yAxis": {
+            "type": "value",
+            "name": kwargs.get("yaxis_title", ""),
+            "axisLabel": {"formatter": "{value}"},
         },
-        'yAxis': {
-            'type': 'value',
-            'name': kwargs.get('yaxis_title', ''),
-            'axisLabel': {
-                'formatter': '{value}'
-            }
-        },
-        'dataZoom': [
-            {
-                'type': 'inside',
-                'start': 0,
-                'end': 100
-            },
-            {
-                'type': 'slider',
-                'start': 0,
-                'end': 100
-            }
+        "dataZoom": [
+            {"type": "inside", "start": 0, "end": 100},
+            {"type": "slider", "start": 0, "end": 100},
         ],
-        'series': series
+        "series": series,
     }
 
     return option
@@ -683,7 +681,7 @@ def stacked_grouped_bar_chart(df, **kwargs):
             if freq in ("M", "MS", "ME"):
                 df.index = df.index.map(lambda x: x.strftime("%m-%Y"))
             if freq in ("Y", "YS", "YE"):
-                df.index = df.index.map(lambda x: x.year )
+                df.index = df.index.map(lambda x: x.year)
             if freq in ("D", "B"):
                 df.index = df.index.map(lambda x: x.date())
 
@@ -784,7 +782,9 @@ def reindex_year_line_subplot(rows, cols, dfs, **kwargs):
 
 def line_plot(df, fwd=None, **kwargs):
     fig = go.Figure()
-    kwargs['colyearmap_enabled'] = False # dont enable colyearmap for line plot as it doesn't apply in this context
+    kwargs["colyearmap_enabled"] = (
+        False  # dont enable colyearmap for line plot as it doesn't apply in this context
+    )
     res = cptr.line_plot_traces(df, fwd, **kwargs)
     for trace in res:
         fig.add_trace(trace)
@@ -806,63 +806,6 @@ def line_plot(df, fwd=None, **kwargs):
     return fig
 
 
-def timeseries_scatter_plot(df, **kwargs):
-    """
-    Generate a scatter plot for a time series dataframe.
-
-    Parameters:
-    - df: A dataframe with a DateTimeIndex and at least two columns.
-          The x-axis will be based on df.iloc[:, 0] and the y-axis on df.iloc[:, 1].
-    """
-
-    # Convert the date index to numbers for color gradient
-    color_values = df.index.astype(int)
-
-    # Create scatter plot using Plotly
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=df.iloc[:, 0],
-            y=df.iloc[:, 1],
-            mode="markers",
-            marker=dict(
-                color=color_values,
-                colorscale="Plasma",
-                colorbar=dict(title="Date"),
-                showscale=True,
-            ),
-            text=df.index.strftime("%Y-%m-%d"),
-            hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
-        )
-    )
-
-    title = kwargs.get("title", f"{df.columns[0]} vs {df.columns[1]}")
-
-    fig.update_layout(
-        title=title,
-        xaxis_title=df.columns[0],
-        yaxis_title=df.columns[1],
-        hovermode="closest",
-    )
-
-    # Adjust the colorbar to display actual dates
-    colorbar_tickvals = color_values[
-        [0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]
-    ]
-    colorbar_ticktext = (
-        df.index[[0, len(df) // 4, len(df) // 2, 3 * len(df) // 4, -1]]
-        .strftime("%Y-%m-%d")
-        .to_list()
-    )
-    fig.update_traces(
-        marker_colorbar_tickvals=colorbar_tickvals,
-        marker_colorbar_ticktext=colorbar_ticktext,
-    )
-
-    return fig
-
-
 def timeseries_scatter_plot(df, line_last_n=None, fit_line=False, **kwargs):
     """
     Generate a scatter plot for a time series dataframe.
@@ -875,7 +818,7 @@ def timeseries_scatter_plot(df, line_last_n=None, fit_line=False, **kwargs):
     """
 
     # Convert the date index to numbers for color gradient
-    color_values = df.index.astype(int)
+    color_values = df.index.astype("int64")
 
     # Create scatter plot using Plotly
     fig = go.Figure()
@@ -923,7 +866,7 @@ def timeseries_scatter_plot(df, line_last_n=None, fit_line=False, **kwargs):
         # Ensuring the number of points does not exceed the dataframe's length
         line_last_n = min(len(df), line_last_n)
         last_points = df.iloc[-line_last_n:, :]
-        last_color_values = last_points.index.astype(int)
+        last_color_values = last_points.index.astype("int64")
         fig.add_trace(
             go.Scatter(
                 x=last_points.iloc[:, 0],
