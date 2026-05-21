@@ -7,9 +7,12 @@ name = "commodplot"
 dynamic = ["version"]
 description = "common commodity plotting including seasonal charts using plotly"
 authors = [
-    {name = "aeorxc", email = "author@example.com"}
+    {name = "aeorxc"},
 ]
-requires-python = ">=3.6"
+maintainers = [
+    {name = "Oil Desk"},
+]
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

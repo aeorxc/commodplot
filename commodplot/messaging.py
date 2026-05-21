@@ -1,3 +1,19 @@
+"""
+SMTP / MIME email composition + Jinja-templated report sending.
+
+TODO(bit-rot-cleanup 2026-05-21): scope leak — this is 179 LOC of SMTP/MIME
+plumbing that has no relationship to chart rendering. It ships here only
+because it was first written here. The right home is a sibling reporting
+package (e.g. `oilreporting`, or absorbed into `oilfundamentalsreports`).
+
+DO NOT delete yet — there are ~22 distinct consumer files across
+oilanalytics, oilfundamentals, oilfundamentalsreports, oilpricingcharts,
+oilrefining, oilstrategies, oilsystematic, prefect-flows, and
+proximo-all-prefect-orion-flows. A move requires a coordinated PR across
+those consumers (or a forwarding shim left here for one deprecation cycle).
+See _fix_cp_report.md in charts-project notes for the consumer list.
+"""
+
 import io
 import logging
 import traceback
@@ -125,19 +141,23 @@ def compose_and_send_report(
 
     message = message.build()
     logger.info("Sending report e-mail to %s", receiver_email)
-    
+
     # Handle semicolon-separated email addresses (convert to list for SMTP compatibility)
     if isinstance(receiver_email, str):
-        if ';' in receiver_email:
-            recipient_list = [email.strip() for email in receiver_email.split(';') if email.strip()]
-        elif ',' in receiver_email:
-            recipient_list = [email.strip() for email in receiver_email.split(',') if email.strip()]
+        if ";" in receiver_email:
+            recipient_list = [
+                email.strip() for email in receiver_email.split(";") if email.strip()
+            ]
+        elif "," in receiver_email:
+            recipient_list = [
+                email.strip() for email in receiver_email.split(",") if email.strip()
+            ]
         else:
             recipient_list = [receiver_email.strip()]
     else:
         # Already a list
         recipient_list = receiver_email
-    
+
     try:
         with SMTP(smtp_host, smtp_port, timeout=smtp_timeout) as client:
             # client.set_debuglevel(1)
@@ -146,7 +166,7 @@ def compose_and_send_report(
             client.sendmail(sender_email, recipient_list, message)
             client.close()
         logger.info("Report sent successfully")
-    except SMTPException as ex:
+    except SMTPException:
         logger.exception("Failed to send a report")
         errors = io.StringIO()
         logging.error(traceback.print_exc(file=errors))
