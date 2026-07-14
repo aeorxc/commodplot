@@ -10,6 +10,9 @@ extends:
   parameters:
     packageName: 'commodplot'
     createRefinitivConfig: false
+    dependencyMode: project
+    dependencyGroups:
+      - test
 
 pool: Self-Hosted-AWS
 
