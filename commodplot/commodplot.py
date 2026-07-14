@@ -138,7 +138,9 @@ def seas_box_plot(hist, fwd=None, **kwargs):
     data = []
     monthstr = {
         x.month: x.strftime("%b")
-        for x in pd.date_range(start="2018", freq="M", periods=12)
+        for x in pd.date_range(
+            start="2018", freq=pd.offsets.MonthEnd(), periods=12
+        )
     }
     for x in hist.columns:
         trace = go.Box(name=monthstr[x], y=hist[x])

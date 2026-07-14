@@ -74,7 +74,7 @@ def generate_table(
     if precision:
         if isinstance(precision, int):
             format_var = "{:.%sf}" % precision
-            df = df.applymap(lambda x: format_var.format(x))
+            df = df.map(lambda x: format_var.format(x))
         elif isinstance(precision, dict):
             for col, col_precision in precision.items():
                 if col in df.columns:
@@ -85,7 +85,7 @@ def generate_table(
                     df[col] = df[col].map(format_var.format)
 
     if accounting_col_columns:
-        res = df.style.applymap(
+        res = df.style.map(
             color_accounting, subset=accounting_col_columns
         ).set_table_styles(table_style)
     else:
