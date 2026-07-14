@@ -71,7 +71,7 @@ def seas_table(hist, fwd=None):
 
     df = transforms.seasonailse(df)
 
-    summary = df.resample("Q").mean()
+    summary = df.resample(pd.offsets.QuarterEnd()).mean()
     winter = summary.iloc[[0, 3], :].mean()
     winter.name = "Q1+Q4"
     summer = summary.iloc[[1, 2], :].mean()
@@ -79,7 +79,7 @@ def seas_table(hist, fwd=None):
     summary.index = ["Q1", "Q2", "Q3", "Q4"]
     summary = pd.concat([summary, pd.DataFrame([winter])])
     summary = pd.concat([summary, pd.DataFrame([summer])])
-    cal = df.resample("Y").mean().iloc[0]
+    cal = df.resample(pd.offsets.YearEnd()).mean().iloc[0]
     cal.name = "Year"
     summary = pd.concat([summary, pd.DataFrame([cal])])
     summary = round(summary, 2)

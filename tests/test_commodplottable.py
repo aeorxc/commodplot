@@ -12,8 +12,11 @@ class TestCommodplotTable(unittest.TestCase):
             columns=["Foo", "Bar", "Buzz", "Fuzz"],
             index=["First", "Second", "Third"],
         )
-        res = cpt.generate_table(df, accounting_col_columns=["Bar"])
+        res = cpt.generate_table(
+            df, precision=2, accounting_col_columns=["Bar"]
+        )
         self.assertIn('<style type="text/css">', res)
+        self.assertIn("-5.00", res)
 
 
 if __name__ == "__main__":
