@@ -36,6 +36,20 @@ test = [
     "pytest-runner",
 ]
 
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-xdist",
+]
+dev = [
+    { include-group = "test" },
+    "black",
+    "mypy",
+    "pylint",
+]
+
 [tool.setuptools_scm]
 
 [tool.setuptools.packages.find]
