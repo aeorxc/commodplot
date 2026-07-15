@@ -1,7 +1,7 @@
 import numpy as np
-import numpy as np
 import pandas as pd
 import plotly
+import plotly.express as px
 import plotly.graph_objects as go
 from commodutil import dates
 from commodutil import transforms
@@ -208,26 +208,53 @@ def timeseries_to_seas_trace(
     :param line_mode: Optional mode for traces (e.g., 'lines' for no markers)
     :return:
     """
-    traces = []
-    for col in seas.columns:
-        trace_kwargs = {
-            "x": seas.index,
-            "y": seas[col],
-            "hoverinfo": "y",
-            "name": str(col),
-            "hovertemplate": hovertemplate_default,
-            "text": text,
-            "visible": line_visible(col, visible_line_years),
-            "line": dict(
-                color=get_year_line_col(col), dash=dash, width=get_year_line_width(col)
-            ),
-            "showlegend": showlegend,
-            "legendgroup": str(col),
-        }
-        if line_mode:
-            trace_kwargs["mode"] = line_mode
+    if len(seas.columns) == 0:
+        return []
 
-        trace = go.Scatter(**trace_kwargs)
+    # Plotly Express handles the wide-form dataframe-to-lines conversion.  Only
+    # take its traces: using the Express figure itself would leak PX axis and
+    # legend defaults into the long-standing commodplot figure contract.
+    # Force SVG so long histories remain ``go.Scatter`` traces; PX's default
+    # auto mode otherwise changes datasets over 1,000 points to Scattergl.
+    px_figure = px.line(
+        seas,
+        y=list(seas.columns),
+        render_mode="svg",
+    )
+    if len(px_figure.data) != len(seas.columns):
+        raise RuntimeError(
+            "Plotly Express generated "
+            f"{len(px_figure.data)} seasonal traces for {len(seas.columns)} columns"
+        )
+
+    traces = []
+    for col, trace in zip(seas.columns, px_figure.data):
+        # PX supplies a few presentation defaults of its own.  Explicitly
+        # restore every observable field from the legacy go.Scatter traces so
+        # callers and generated HTML keep the same names, styling and hover.
+        trace.x = seas.index
+        trace.y = seas[col]
+        trace.name = str(col)
+        trace.hoverinfo = "y"
+        trace.hovertemplate = hovertemplate_default
+        trace.text = text
+        trace.visible = line_visible(col, visible_line_years)
+        trace.line = dict(
+            color=get_year_line_col(col),
+            dash=dash,
+            width=get_year_line_width(col),
+        )
+        trace.showlegend = showlegend
+        trace.legendgroup = str(col)
+
+        # ``px.line`` sets ``mode='lines'`` plus empty marker/orientation
+        # metadata.  Legacy seasonal traces omitted these fields unless the
+        # caller explicitly requested ``line_mode``.
+        trace.mode = line_mode if line_mode else None
+        trace.marker = None
+        trace.orientation = None
+        trace.xaxis = None
+        trace.yaxis = None
         traces.append(trace)
 
     return traces

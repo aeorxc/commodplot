@@ -45,10 +45,6 @@ def seas_line_plot(df, fwd=None, **kwargs):
         for trace in traces["fwd"]:
             fig.add_trace(trace)
 
-    fig.layout.xaxis.tickvals = pd.date_range(
-        start=str(dates.curyear), periods=12, freq="MS"
-    )
-
     title = cpu.gen_title(df, **kwargs)
     legend = go.layout.Legend(font=dict(size=10), traceorder="reversed")
     yaxis_title = kwargs.get("yaxis_title", None)
@@ -68,6 +64,16 @@ def seas_line_plot(df, fwd=None, **kwargs):
         layout_kwargs["template"] = template
 
     fig.update_layout(**layout_kwargs)
+    xaxis_kwargs = {
+        "type": "date",
+        "tick0": pd.Timestamp(dates.curyear, 1, 1),
+        "dtick": "M1",
+        "tickformat": "%b",
+    }
+    ticklabelmode = kwargs.get("ticklabelmode", None)
+    if ticklabelmode:
+        xaxis_kwargs["ticklabelmode"] = ticklabelmode
+    fig.update_xaxes(**xaxis_kwargs)
 
     return fig
 
@@ -116,10 +122,16 @@ def seas_line_subplot(rows, cols, df, fwd=None, **kwargs):
             chartcount += 1
 
     legend = go.layout.Legend(font=dict(size=10))
-    fig.update_xaxes(
-        tickvals=pd.date_range(start=str(dates.curyear), periods=12, freq="MS"),
-        tickformat="%b",
-    )
+    xaxis_kwargs = {
+        "type": "date",
+        "tick0": pd.Timestamp(dates.curyear, 1, 1),
+        "dtick": "M1",
+        "tickformat": "%b",
+    }
+    ticklabelmode = kwargs.get("ticklabelmode", None)
+    if ticklabelmode:
+        xaxis_kwargs["ticklabelmode"] = ticklabelmode
+    fig.update_xaxes(**xaxis_kwargs)
     title = kwargs.get("title", "")
     fig.update_layout(
         title=title,
