@@ -405,9 +405,26 @@ def timeseries_trace(series: pd.Series, **kwargs) -> go.Scatter:
     # hover text formatting
     hover_date_format = kwargs.get("hover_date_format", "%d-%b-%y")
 
+    if series.empty:
+        # PX does not emit a trace for empty inputs; retain the public helper's
+        # historical empty-trace behavior for sparse forward overlays.
+        x_values = series.index
+        y_values = series.values
+    else:
+        properties = (
+            px.line(
+                x=series.index,
+                y=series.values,
+                render_mode="svg",
+            )
+            .data[0]
+            .to_plotly_json()
+        )
+        x_values = properties["x"]
+        y_values = properties["y"]
     t = go.Scatter(
-        x=series.index,
-        y=series.values,
+        x=x_values,
+        y=y_values,
         hoverinfo="y",
         name=name,
         hovertemplate=kwargs.get("hovertemplate", hovertemplate_default),
