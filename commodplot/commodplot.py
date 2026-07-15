@@ -1,6 +1,5 @@
 import itertools
 import warnings
-from collections.abc import Mapping, Sequence
 
 import pandas as pd
 import plotly as py
@@ -17,368 +16,6 @@ from commodplot import commodplottrace as cptr
 from commodplot import commodplotutil as cpu
 
 preset_margins = {"l": 0, "r": 0, "t": 40, "b": 0}
-
-
-def _px_bar_trace(x, y, *, name=None, orientation=None):
-    """Build a bar trace with PX while retaining the legacy trace contract."""
-    if len(y) == 0:
-        return go.Bar(x=x, y=y, name=name, orientation=orientation)
-    properties = px.bar(x=x, y=y, orientation=orientation).data[0].to_plotly_json()
-    return go.Bar(
-        x=properties["x"],
-        y=properties["y"],
-        name=name,
-        orientation=orientation,
-    )
-
-
-def _px_area_trace(x, y, *, name, stackgroup, showlegend):
-    """Build an area trace with PX while retaining the legacy trace contract."""
-    if len(y) == 0:
-        return go.Scatter(
-            x=x,
-            y=y,
-            name=name,
-            stackgroup=stackgroup,
-            showlegend=showlegend,
-        )
-    properties = px.area(x=x, y=y).data[0].to_plotly_json()
-    return go.Scatter(
-        x=properties["x"],
-        y=properties["y"],
-        name=name,
-        stackgroup=stackgroup,
-        showlegend=showlegend,
-    )
-
-
-def _validate_datetime_series(value, panel_key):
-    if isinstance(value, pd.DataFrame):
-        if value.shape[1] != 1:
-            raise ValueError(
-                f"Panel {panel_key!r} must contain exactly one series; "
-                f"received {value.shape[1]} columns."
-            )
-        value = value.iloc[:, 0]
-    if not isinstance(value, pd.Series):
-        raise TypeError(
-            f"Panel {panel_key!r} must be a pandas Series or single-column "
-            "DataFrame."
-        )
-    if not isinstance(value.index, pd.DatetimeIndex):
-        raise TypeError(f"Panel {panel_key!r} must use a DatetimeIndex.")
-    if value.empty:
-        raise ValueError(f"Panel {panel_key!r} must not be empty.")
-    return value.sort_index()
-
-
-def _seasonal_panel_items(data):
-    if isinstance(data, pd.DataFrame):
-        if data.shape[1] == 0:
-            raise ValueError("Seasonal facet data must contain at least one column.")
-        if data.columns.has_duplicates:
-            raise ValueError("Seasonal facet DataFrame columns must be unique.")
-        return [
-            (key, _validate_datetime_series(data[key], key)) for key in data.columns
-        ]
-    if isinstance(data, Mapping):
-        if not data:
-            raise ValueError("Seasonal facet data mapping must not be empty.")
-        return [
-            (key, _validate_datetime_series(value, key)) for key, value in data.items()
-        ]
-    raise TypeError(
-        "Seasonal facet data must be a wide DataFrame or an ordered mapping of "
-        "single-series panels."
-    )
-
-
-def _forward_panel_map(fwd, panel_keys):
-    if fwd is None:
-        return {}
-    if isinstance(fwd, pd.Series):
-        if len(panel_keys) != 1:
-            raise ValueError(
-                "A forward Series can only be used with a single seasonal panel."
-            )
-        return {panel_keys[0]: _validate_datetime_series(fwd, panel_keys[0])}
-    if isinstance(fwd, pd.DataFrame):
-        if fwd.columns.has_duplicates:
-            raise ValueError("Forward DataFrame columns must be unique.")
-        items = [(key, fwd[key]) for key in fwd.columns]
-    elif isinstance(fwd, Mapping):
-        items = list(fwd.items())
-    else:
-        raise TypeError(
-            "Forward facet data must be a Series, DataFrame, or ordered mapping."
-        )
-
-    unknown = [key for key, _ in items if key not in panel_keys]
-    if unknown:
-        raise ValueError(f"Forward data contains unknown panel keys: {unknown!r}.")
-    return {key: _validate_datetime_series(value, key) for key, value in items}
-
-
-def _reindex_panel_items(data):
-    if isinstance(data, Mapping):
-        items = list(data.items())
-    elif isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
-        items = [(index, value) for index, value in enumerate(data)]
-    else:
-        raise TypeError(
-            "Reindex-year facet data must be an ordered mapping or a sequence "
-            "of DataFrames."
-        )
-    if not items:
-        raise ValueError("Reindex-year facet data must not be empty.")
-    for key, value in items:
-        if not isinstance(value, pd.DataFrame):
-            raise TypeError(f"Panel {key!r} must be a pandas DataFrame.")
-        if value.empty or value.shape[1] == 0:
-            raise ValueError(f"Panel {key!r} must not be empty.")
-        if not isinstance(value.index, pd.DatetimeIndex):
-            raise TypeError(f"Panel {key!r} must use a DatetimeIndex.")
-        if value.columns.has_duplicates:
-            raise ValueError(f"Panel {key!r} has duplicate column labels.")
-        year_map = dates.find_year(value)
-        unparseable = [
-            column
-            for column, year in year_map.items()
-            if not isinstance(year, (int, np.integer)) or isinstance(year, bool)
-        ]
-        if unparseable:
-            raise ValueError(
-                f"Panel {key!r} has columns without a four-digit year: "
-                f"{unparseable!r}."
-            )
-        year_columns = {}
-        for column, year in year_map.items():
-            year_columns.setdefault(int(year), []).append(column)
-        duplicate_years = {
-            year: columns for year, columns in year_columns.items() if len(columns) > 1
-        }
-        if duplicate_years:
-            raise ValueError(
-                f"Panel {key!r} has duplicate reindex years: {duplicate_years!r}."
-            )
-    return [(key, value.sort_index()) for key, value in items]
-
-
-def _panel_titles(panel_keys, facet_titles):
-    if facet_titles is None:
-        return [str(key) for key in panel_keys]
-    if not isinstance(facet_titles, Mapping):
-        raise TypeError("facet_titles must be a mapping keyed like the facet data.")
-    unknown = [key for key in facet_titles if key not in panel_keys]
-    if unknown:
-        raise ValueError(f"facet_titles contains unknown panel keys: {unknown!r}.")
-    return [str(facet_titles.get(key, key)) for key in panel_keys]
-
-
-def _validate_facet_options(facet_col_wrap, shared_xaxes, shared_yaxes, legend_mode):
-    if isinstance(facet_col_wrap, bool) or not isinstance(facet_col_wrap, int):
-        raise TypeError("facet_col_wrap must be a positive integer.")
-    if facet_col_wrap < 1:
-        raise ValueError("facet_col_wrap must be a positive integer.")
-    if not isinstance(shared_xaxes, bool) or not isinstance(shared_yaxes, bool):
-        raise TypeError("shared_xaxes and shared_yaxes must be booleans.")
-    if legend_mode not in {"shared", "each", "none"}:
-        raise ValueError("legend_mode must be 'shared', 'each', or 'none'.")
-
-
-def _make_panel_subplots(
-    panel_traces,
-    panel_titles,
-    *,
-    facet_col_wrap,
-    shared_xaxes,
-    shared_yaxes,
-    legend_mode,
-    xaxis_kwargs,
-    layout_kwargs,
-    yaxis_title=None,
-    panel_x_ranges=None,
-    row_count=None,
-    column_count=None,
-):
-    panel_count = len(panel_traces)
-    cols = column_count or min(facet_col_wrap, panel_count)
-    rows = row_count or (panel_count + cols - 1) // cols
-    if rows * cols < panel_count:
-        raise ValueError(
-            f"Facet grid has {rows * cols} cells for {panel_count} panels."
-        )
-    titles = list(panel_titles) + [None] * (rows * cols - panel_count)
-    fig = make_subplots(
-        rows=rows,
-        cols=cols,
-        subplot_titles=titles,
-        shared_xaxes=shared_xaxes,
-        shared_yaxes=shared_yaxes,
-    )
-    for index, traces in enumerate(panel_traces):
-        row = index // cols + 1
-        col = index % cols + 1
-        showlegend = legend_mode == "each" or (legend_mode == "shared" and index == 0)
-        for trace in traces:
-            trace.showlegend = showlegend
-            fig.add_trace(trace, row=row, col=col)
-
-    fig.update_xaxes(**xaxis_kwargs)
-    if panel_x_ranges is not None:
-        if len(panel_x_ranges) != panel_count:
-            raise ValueError("Each panel must provide one x-axis range.")
-        if shared_xaxes:
-            common_range = [
-                min(panel_range[0] for panel_range in panel_x_ranges),
-                max(panel_range[1] for panel_range in panel_x_ranges),
-            ]
-            panel_x_ranges = [common_range] * panel_count
-        for index, panel_range in enumerate(panel_x_ranges):
-            row = index // cols + 1
-            col = index % cols + 1
-            fig.update_xaxes(range=panel_range, row=row, col=col)
-    if yaxis_title is not None:
-        for index in range(panel_count):
-            row = index // cols + 1
-            col = index % cols + 1
-            fig.update_yaxes(title_text=yaxis_title, row=row, col=col)
-    fig.update_layout(showlegend=legend_mode != "none", **layout_kwargs)
-    return fig
-
-
-def _seasonal_trace_list(df, fwd, *, include_average, trace_kwargs):
-    trace_kwargs = dict(trace_kwargs)
-    trace_kwargs.pop("showlegend", None)
-    traces = cptr.seas_plot_traces(df, fwd=fwd, **trace_kwargs)
-    ordered = []
-    ordered.extend(traces.get("shaded_range") or [])
-    if include_average and traces.get("average_line") is not None:
-        ordered.append(traces["average_line"])
-    ordered.extend(traces.get("hist") or [])
-    ordered.extend(traces.get("fwd") or [])
-    return ordered
-
-
-def _reindex_trace_list(df, trace_kwargs, panel_key=None):
-    dft = transforms.reindex_year(df)
-    trace_kwargs = dict(trace_kwargs)
-    trace_kwargs.pop("showlegend", None)
-    max_results = trace_kwargs.pop("max_results", None)
-    if max_results is not None:
-        if (
-            isinstance(max_results, bool)
-            or not isinstance(max_results, int)
-            or max_results < 1
-        ):
-            raise ValueError("max_results must be a positive integer.")
-        dft = dft.tail(max_results)
-    if dft.empty:
-        raise ValueError(f"Panel {panel_key!r} has no values after reindexing.")
-    colsel = cpu.reindex_year_df_rel_col(dft)
-    trace_kwargs["current_select_year"] = colsel
-    traces = cptr.reindex_plot_traces(dft, **trace_kwargs)
-    ordered = []
-    ordered.extend(traces.get("shaded_range") or [])
-    ordered.extend(traces.get("hist") or [])
-    range_end = dft.index[-1]
-    range_start = max(dft.index[0], range_end - pd.DateOffset(years=3))
-    panel_range = [range_start, range_end]
-    return ordered, panel_range
-
-
-def seas_line_facets(
-    data,
-    fwd=None,
-    *,
-    facet_col_wrap=2,
-    facet_titles=None,
-    shared_xaxes=False,
-    shared_yaxes=False,
-    legend_mode="shared",
-    **kwargs,
-):
-    """Create seasonal small multiples with panel-local transforms and overlays."""
-    _validate_facet_options(facet_col_wrap, shared_xaxes, shared_yaxes, legend_mode)
-    panel_items = _seasonal_panel_items(data)
-    panel_keys = [key for key, _ in panel_items]
-    fwd_by_panel = _forward_panel_map(fwd, panel_keys)
-    trace_lists = [
-        _seasonal_trace_list(
-            series,
-            fwd_by_panel.get(key),
-            include_average=True,
-            trace_kwargs=kwargs,
-        )
-        for key, series in panel_items
-    ]
-    xaxis_kwargs = {
-        "type": "date",
-        "tick0": pd.Timestamp(dates.curyear, 1, 1),
-        "dtick": "M1",
-        "tickformat": "%b",
-    }
-    if kwargs.get("ticklabelmode"):
-        xaxis_kwargs["ticklabelmode"] = kwargs["ticklabelmode"]
-    layout_kwargs = {
-        "title": kwargs.get("title", ""),
-        "title_x": 0.01,
-        "legend": go.layout.Legend(font=dict(size=10), traceorder="reversed"),
-        "hovermode": kwargs.get("hovermode", "x"),
-        "margin": preset_margins,
-    }
-    if kwargs.get("template"):
-        layout_kwargs["template"] = kwargs["template"]
-    return _make_panel_subplots(
-        trace_lists,
-        _panel_titles(panel_keys, facet_titles),
-        facet_col_wrap=facet_col_wrap,
-        shared_xaxes=shared_xaxes,
-        shared_yaxes=shared_yaxes,
-        legend_mode=legend_mode,
-        xaxis_kwargs=xaxis_kwargs,
-        layout_kwargs=layout_kwargs,
-        yaxis_title=kwargs.get("yaxis_title"),
-    )
-
-
-def reindex_year_line_facets(
-    data,
-    *,
-    facet_col_wrap=2,
-    facet_titles=None,
-    shared_xaxes=False,
-    shared_yaxes=False,
-    legend_mode="shared",
-    **kwargs,
-):
-    """Create reindex-year small multiples with a transform per panel."""
-    _validate_facet_options(facet_col_wrap, shared_xaxes, shared_yaxes, legend_mode)
-    panel_items = _reindex_panel_items(data)
-    panel_keys = [key for key, _ in panel_items]
-    panel_results = [
-        _reindex_trace_list(frame, kwargs, panel_key=key) for key, frame in panel_items
-    ]
-    trace_lists = [result[0] for result in panel_results]
-    panel_ranges = [result[1] for result in panel_results]
-    return _make_panel_subplots(
-        trace_lists,
-        _panel_titles(panel_keys, facet_titles),
-        facet_col_wrap=facet_col_wrap,
-        shared_xaxes=shared_xaxes,
-        shared_yaxes=shared_yaxes,
-        legend_mode=legend_mode,
-        xaxis_kwargs={"type": "date", "tickformat": "%b-%y"},
-        layout_kwargs={
-            "title": kwargs.get("title", ""),
-            "title_x": 0.01,
-            "legend": go.layout.Legend(font=dict(size=10)),
-            "hovermode": kwargs.get("hovermode", "closest"),
-            "margin": preset_margins,
-        },
-        yaxis_title=kwargs.get("yaxis_title"),
-        panel_x_ranges=panel_ranges,
-    )
 
 
 def seas_line_plot(df, fwd=None, **kwargs):
@@ -442,40 +79,70 @@ def seas_line_plot(df, fwd=None, **kwargs):
     return fig
 
 
+def seas_line_facets(
+    df, fwd=None, *, facet_col_wrap=2, subplot_titles=None, **kwargs
+):
+    """Create seasonal small multiples from a wide DataFrame."""
+    from commodplot import commodplotfacets
+
+    return commodplotfacets.seas_line_facets(
+        df,
+        fwd=fwd,
+        facet_col_wrap=facet_col_wrap,
+        subplot_titles=subplot_titles,
+        **kwargs,
+    )
+
+
 def seas_line_subplot(rows, cols, df, fwd=None, **kwargs):
-    """Compatibility wrapper for :func:`seas_line_facets`."""
+    """
+    Generate a plot with multiple seasonal subplots.
+    :param rows:
+    :param cols:
+    :param dfs:
+    :param fwds:
+    :param kwargs:
+    :return:
+    """
     warnings.warn(
         "seas_line_subplot() is deprecated; use seas_line_facets() instead.",
         FutureWarning,
         stacklevel=2,
     )
-    if isinstance(rows, bool) or not isinstance(rows, int) or rows < 1:
-        raise ValueError("rows must be a positive integer.")
-    if isinstance(cols, bool) or not isinstance(cols, int) or cols < 1:
-        raise ValueError("cols must be a positive integer.")
-    panel_items = _seasonal_panel_items(df)
-    if len(panel_items) > rows * cols:
-        raise ValueError(
-            f"Facet grid has {rows * cols} cells for {len(panel_items)} panels."
-        )
-    forward_by_key = {}
-    if fwd is not None:
-        if not isinstance(fwd, pd.DataFrame):
-            raise TypeError(
-                "Legacy seas_line_subplot forward data must be a DataFrame."
+    fig = make_subplots(
+        cols=cols,
+        rows=rows,
+        specs=[[{"type": "scatter"} for x in range(0, cols)] for y in range(0, rows)],
+        subplot_titles=kwargs.get("subplot_titles", None),
+    )
+
+    chartcount = 0
+    for row in range(1, rows + 1):
+        for col in range(1, cols + 1):
+            # print(row, col)
+            if chartcount > len(df):
+                chartcount += 1
+                continue
+
+            dfx = df[df.columns[chartcount]]
+            fwdx = None
+            if fwd is not None and len(fwd) > chartcount:
+                fwdx = fwd[fwd.columns[chartcount]]
+
+            showlegend = True if chartcount == 0 else False
+
+            traces = cptr.seas_plot_traces(
+                dfx, fwd=fwdx, showlegend=showlegend, **kwargs
             )
-        for index, (key, _) in enumerate(panel_items):
-            if index < fwd.shape[1]:
-                forward_by_key[key] = _validate_datetime_series(fwd.iloc[:, index], key)
-    trace_lists = [
-        _seasonal_trace_list(
-            series,
-            forward_by_key.get(key),
-            include_average=False,
-            trace_kwargs=kwargs,
-        )
-        for key, series in panel_items
-    ]
+
+            for trace_set in ["shaded_range", "hist", "fwd"]:
+                if trace_set in traces:
+                    for trace in traces[trace_set]:
+                        fig.add_trace(trace, row=row, col=col)
+
+            chartcount += 1
+
+    legend = go.layout.Legend(font=dict(size=10))
     xaxis_kwargs = {
         "type": "date",
         "tick0": pd.Timestamp(dates.curyear, 1, 1),
@@ -485,30 +152,16 @@ def seas_line_subplot(rows, cols, df, fwd=None, **kwargs):
     ticklabelmode = kwargs.get("ticklabelmode", None)
     if ticklabelmode:
         xaxis_kwargs["ticklabelmode"] = ticklabelmode
-    subplot_titles = kwargs.get("subplot_titles")
-    if subplot_titles is None:
-        panel_titles = [None] * len(panel_items)
-    else:
-        if len(subplot_titles) != len(panel_items):
-            raise ValueError("subplot_titles must contain one title per panel.")
-        panel_titles = list(subplot_titles)
-    return _make_panel_subplots(
-        trace_lists,
-        panel_titles,
-        facet_col_wrap=cols,
-        shared_xaxes=False,
-        shared_yaxes=False,
-        legend_mode="shared",
-        xaxis_kwargs=xaxis_kwargs,
-        layout_kwargs={
-            "title": kwargs.get("title", ""),
-            "title_x": 0.01,
-            "legend": go.layout.Legend(font=dict(size=10)),
-            "margin": preset_margins,
-        },
-        row_count=rows,
-        column_count=cols,
+    fig.update_xaxes(**xaxis_kwargs)
+    title = kwargs.get("title", "")
+    fig.update_layout(
+        title=title,
+        title_x=0.01,
+        xaxis_tickformat="%b",
+        legend=legend,
+        margin=preset_margins,
     )
+    return fig
 
 
 def seas_box_plot(hist, fwd=None, **kwargs):
@@ -711,12 +364,12 @@ def bar_line_plot(df, linecol="Total", **kwargs):
 
 def horizontal_bar_plot(df, **kwargs):
     warnings.warn(
-        "horizontal_bar_plot() is deprecated; use "
-        "plotly.express.bar(..., orientation='h') directly instead.",
+        "horizontal_bar_plot() is deprecated; use plotly.express.bar(..., "
+        "orientation='h') directly instead.",
         FutureWarning,
         stacklevel=2,
     )
-    bar = _px_bar_trace(df.iloc[:, 0], df.index, orientation="h")
+    bar = go.Bar(x=df.iloc[:, 0], y=df.index, orientation="h")  # horizontal bars
 
     fig = go.Figure(data=[bar])
 
@@ -820,6 +473,20 @@ def reindex_year_line_plot(df, **kwargs):
     return fig
 
 
+def reindex_year_line_facets(
+    dfs, *, facet_col_wrap=2, subplot_titles=None, **kwargs
+):
+    """Create reindex-year small multiples from a sequence of DataFrames."""
+    from commodplot import commodplotfacets
+
+    return commodplotfacets.reindex_year_line_facets(
+        dfs,
+        facet_col_wrap=facet_col_wrap,
+        subplot_titles=subplot_titles,
+        **kwargs,
+    )
+
+
 def candle_chart(df, **kwargs):
     fig = go.Figure(
         data=[
@@ -854,12 +521,8 @@ def stacked_area_chart(df, **kwargs):
 
     for col in df.columns:
         fig.add_trace(
-            _px_area_trace(
-                df.index,
-                df[col],
-                name=col,
-                stackgroup=group,
-                showlegend=showlegend,
+            go.Scatter(
+                x=df.index, y=df[col], name=col, stackgroup=group, showlegend=showlegend
             )
         )
 
@@ -1036,7 +699,7 @@ def bar_chart(df, **kwargs):
     fig = go.Figure()
 
     for col in df.columns:
-        fig.add_trace(_px_bar_trace(df.index, df[col], name=col))
+        fig.add_trace(go.Bar(x=df.index, y=df[col], name=col))
 
     hovermode = kwargs.get("hovermode", "x")
     fig.update_layout(
@@ -1134,54 +797,59 @@ def stacked_grouped_bar_chart(df, **kwargs):
 
 
 def reindex_year_line_subplot(rows, cols, dfs, **kwargs):
-    """Compatibility wrapper for :func:`reindex_year_line_facets`."""
     warnings.warn(
         "reindex_year_line_subplot() is deprecated; use "
         "reindex_year_line_facets() instead.",
         FutureWarning,
         stacklevel=2,
     )
-    if isinstance(rows, bool) or not isinstance(rows, int) or rows < 1:
-        raise ValueError("rows must be a positive integer.")
-    if isinstance(cols, bool) or not isinstance(cols, int) or cols < 1:
-        raise ValueError("cols must be a positive integer.")
-    panel_items = _reindex_panel_items(dfs)
-    if len(panel_items) > rows * cols:
-        raise ValueError(
-            f"Facet grid has {rows * cols} cells for {len(panel_items)} panels."
-        )
-    subplot_titles = kwargs.get("subplot_titles")
-    if subplot_titles is None:
-        panel_titles = [None] * len(panel_items)
-    else:
-        if len(subplot_titles) != len(panel_items):
-            raise ValueError("subplot_titles must contain one title per panel.")
-        panel_titles = list(subplot_titles)
-    trace_kwargs = dict(kwargs)
-    trace_kwargs.pop("max_results", None)
-    panel_results = [
-        _reindex_trace_list(frame, trace_kwargs, panel_key=key)
-        for key, frame in panel_items
-    ]
-    return _make_panel_subplots(
-        [result[0] for result in panel_results],
-        panel_titles,
-        facet_col_wrap=cols,
+    fig = make_subplots(
+        cols=cols,
+        rows=rows,
+        specs=[[{"type": "scatter"} for x in range(0, cols)] for y in range(0, rows)],
+        subplot_titles=kwargs.get("subplot_titles", None),
         shared_xaxes=False,
-        shared_yaxes=False,
-        legend_mode="shared",
-        xaxis_kwargs={"type": "date", "tickformat": "%b-%y"},
-        layout_kwargs={
-            "title": kwargs.get("title", ""),
-            "title_x": 0.01,
-            "legend": go.layout.Legend(font=dict(size=10)),
-            "hovermode": kwargs.get("hovermode", "closest"),
-            "margin": preset_margins,
-            "yaxis_title": kwargs.get("yaxis_title"),
-        },
-        row_count=rows,
-        column_count=cols,
     )
+
+    chartcount = 0
+    for row in range(1, rows + 1):
+        for col in range(1, cols + 1):
+            # print(row, col)
+            if chartcount > len(dfs):
+                chartcount += 1
+                continue
+            showlegend = True if chartcount == 0 else False
+
+            dfx = dfs[chartcount]
+            dft = transforms.reindex_year(dfx)
+            colsel = cpu.reindex_year_df_rel_col(dft)
+            traces = cptr.reindex_plot_traces(
+                dft, current_select_year=colsel, showlegend=showlegend, **kwargs
+            )
+            for trace_set in ["shaded_range", "hist"]:
+                if trace_set in traces:
+                    for trace in traces[trace_set]:
+                        fig.add_trace(trace, row=row, col=col)
+
+            chartcount += 1
+
+    legend = go.layout.Legend(font=dict(size=10))
+    yaxis_title = kwargs.get("yaxis_title", None)
+    hovermode = kwargs.get("hovermode", "closest")
+    title = kwargs.get("title", "")
+    fig.update_layout(
+        title=title,
+        title_x=0.01,
+        xaxis_tickformat="%b-%y",
+        yaxis_title=yaxis_title,
+        legend=legend,
+        hovermode=hovermode,
+        margin=preset_margins,
+    )
+
+    fig.update_xaxes(type="date")
+
+    return fig
 
 
 def line_plot(df, fwd=None, **kwargs):
@@ -1249,28 +917,21 @@ def timeseries_scatter_plot(df, line_last_n=None, fit_line=False, **kwargs):
             )
         )
 
-    scatter_properties = (
-        px.scatter(
+    fig.add_trace(
+        go.Scatter(
             x=df.iloc[:, 0],
             y=df.iloc[:, 1],
+            mode="markers",
+            marker=dict(
+                color=color_values,
+                colorscale="Viridis",
+                colorbar=dict(title="Date"),
+                showscale=True,
+            ),
+            text=df.index.strftime("%Y-%m-%d"),
+            hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
         )
-        .data[0]
-        .to_plotly_json()
     )
-    scatter_trace = go.Scatter(
-        x=scatter_properties["x"],
-        y=scatter_properties["y"],
-        hovertemplate="<b>Date:</b> %{text}<br><b>X:</b> %{x}<br><b>Y:</b> %{y}",
-        mode="markers",
-        text=df.index.strftime("%Y-%m-%d"),
-        marker=dict(
-            color=color_values,
-            colorscale="Viridis",
-            colorbar=dict(title="Date"),
-            showscale=True,
-        ),
-    )
-    fig.add_trace(scatter_trace)
 
     # Add a line connecting the last N data points if specified
     if line_last_n is not None and line_last_n > 0:

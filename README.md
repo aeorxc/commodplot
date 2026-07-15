@@ -4,8 +4,8 @@ Common plotting and HTML-report helpers for commodity analytics. The package
 supports Python 3.9 and newer and includes its Jinja templates and CSS in built
 distributions.
 
-See [Plotly Express migration and facet APIs](docs/plotly-express-migration.md)
-for native replacements for generic wrappers and the compatibility lifecycle.
+See [Plotly migration and facet APIs](docs/plotly-express-migration.md) for
+native replacements for generic wrappers and the compatibility lifecycle.
 
 ## Install as a library
 
